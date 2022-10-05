@@ -1,0 +1,34 @@
+#should I be using dictionaries more than I currently am, rather than lists
+#like in the state vector?
+
+def simulate(dxdt, integrator, t_span, q0, dt):
+    '''
+    Takes a given system and simulates the evolution of that system over
+    time. Uses a numerical integrator of the user's choice.
+    
+    Inputs:
+    - dxdt: func() that evaluates the derivative of the state variables. 
+        takes in the current state q0 of size [1,n] and returns an array
+        of that same size qd, [1,n]
+    - integrator: RK4 or Euler numerical integration. takes in x and returns
+        x_new
+    - q0: initial state of the system, in form of a Numpy vector of size [1,n]
+    - t_span: array-like, [t0, tf]
+    - dt: timestep by which to evolve the system    
+    
+    Returns: an array of approx. size [n, (tf-t0)/dt] that contains the evolution of
+    the state variables over the timespan
+    
+    '''
+    [t0, tf] = t_span
+    q_array = np.array(q0)
+    q = q0
+
+    for t in np.arange(t0, tf, dt):
+        
+        q_new = integrator(dxdt,q,t,dt)
+        q_array.append(q_new)
+        q = q_new
+        
+    return q_array
+        
