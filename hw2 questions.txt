@@ -1,0 +1,2 @@
+the code for hw2 says something about sympy version needing to
+be 1.6.2. can it be a later version than that? I have 1.11.2.
