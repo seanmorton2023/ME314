@@ -1,0 +1,27 @@
+start with 4 states, x, theta, xd, thetad
+
+when you apply constraint, lose 1
+when you apply conserved energy, lose 1
+when you apply conserved momentum, lose 1
+
+at the end you can describe whole system with 1 
+variable evolving in time
+
+with 4 equations to describe system, can break it down
+to constraint phi, hamiltonian h, momentum p, angle theta
+
+time derivatives of phi = 0, hamiltonian = 0, momentum = 0,
+theta is some crazy ODE
+
+can get rid of independent states in exchange for 
+having unintuitive ODEs
+
+
+____
+
+1. assumptions about conserved quantity via Noether relate to
+	the derivative of the Lagrangian
+2. physical intuition is about global invariance; we care 
+	about the local invariance, which can be evaluated by taking
+	the derivative of the global invariance and evaluating at
+	eps = 0
