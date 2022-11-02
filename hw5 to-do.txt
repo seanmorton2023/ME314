@@ -1,0 +1,70 @@
+General
+Import:
+- compute_EL
+- solve_EL
+- solve_constrained_EL
+
+don't import rk4 and simulate; we can just use
+integrate() and simulate() provided
+
+
+Take 2hrs to start, chug through, and hopefully get through the first 4 problems
+
+
+
+P1
+- define variables and constants
+- define x and y as a function of theta
+- make a substitution dict
+- define KE, U, and lagrangian of system
+- compute non-constrained EL
+- solve
+- make dxdt function
+- simulate system over time
+
+validation
+- plot hamiltonian of system over time
+- no conserved quantity for single pendulum
+
+P2
+- use setup provided in problem 1
+
+solving what happens at time of impact
+- make the equations L and Phi, and differentiate
+- define the equations in terms of L, q, and qd in Sympy
+- don't solve the equations yet; just compute the form of them
+
+P3
+
+- this is where we solve the equations from tau- to tau+
+- sub in dummy variables for the functions q(t)and qd(t)
+- find solutions to qdot and lambda
+	- filter the solutions so that only the ones where lambda is
+		nonzero are valid
+- 
+
+P4
+
+- define phi at initial timestep
+- define impact condition phi as point where theta equals zero
+- calculate 
+- define impact update function
+- construct general loop structure of checking whether an impact
+	has occurred
+
+
+P5
+- only start once first impact problem has been approached
+
+
+P6
+
+
+P7
+
+
+P8
+
+
+P9
+
