@@ -12,26 +12,31 @@ Take 2hrs to start, chug through, and hopefully get through the first 4 problems
 
 
 
-P1
+P1 - DONE
 - define variables and constants
 - define x and y as a function of theta
 - make a substitution dict
+- define state vector
 - define KE, U, and lagrangian of system
 - compute non-constrained EL
 - solve
 - make dxdt function
+- define ICs
 - simulate system over time
 
-validation
+validation - not done
+- check work with single pendulum from prev. hws
 - plot hamiltonian of system over time
 - no conserved quantity for single pendulum
 
-P2
+P2 - DONE
 - use setup provided in problem 1
 
 solving what happens at time of impact
-- make the equations L and Phi, and differentiate
-- define the equations in terms of L, q, and qd in Sympy
+- make equation L - already done
+- make equation dPhi/dq
+- make equation dL/dqd * q - L
+- define the equations in terms of L, q, and qd dummy vars
 - don't solve the equations yet; just compute the form of them
 
 P3
