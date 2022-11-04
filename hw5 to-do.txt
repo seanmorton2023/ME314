@@ -11,6 +11,28 @@ integrate() and simulate() provided
 Take 2hrs to start, chug through, and hopefully get through the first 4 problems
 
 
+findings from Thursday OH:
+- there's nothing in problem 5 that says to solve the Euler-Lagrange equations for the
+	system, but clarify: we have to do it right?
+	-> yes. triple pendulums will be really annoying to work with
+	-> asked about my computer type and model, determined it was similar to his
+	-> if it takes more than 15 to 20min to solve, be concerned
+	-> should not need to take that long if you simplify beforehand
+- check: do we need to structure our loop based around a fixed timespan,
+	or around having a fixed number of impacts?
+	-> up to you: can pick a time that causes impacts to happen 5 times, or
+		do a while loop and break
+	-> start with 10s and see how many impacts 
+- they didn't say anything about g in the problem definition of 5. should we 
+	just use a number like 9.8 for g, or should we use "g" and substitute it in later?
+		-> says to use 9.8 for g from the outset
+- recommends we use the "threshold" method for the triple pendulum as the pend. can bounce
+	around to the other side
+- problems 6-9: have passed the limit where sympy can solve the general equations for
+	tau+ variables as a general equation. instead, sub in values of s at tau-, and any
+	values of s at tau+ that don't change, into the impact equations, and solve
+	for state at tau+
+	
 
 P1 - DONE
 - define variables and constants
@@ -39,7 +61,14 @@ solving what happens at time of impact
 - define the equations in terms of L, q, and qd dummy vars
 - don't solve the equations yet; just compute the form of them
 
-P3
+P3 - DONE
+
+**found a problem. I had "dL/dqdot" and not "dL/dqdot dotted with qdot"
+in my impacts expressions**
+
+-> this would definitely give the wrong expression for tau+, so make sure
+to change this
+
 
 - this is where we solve the equations from tau- to tau+
 - sub in dummy variables for the functions q(t)and qd(t)
@@ -50,20 +79,59 @@ P3
 
 P4
 
+done, but not debugged or tested
+
 - define phi at initial timestep
 - define impact condition phi as point where theta equals zero
 - calculate 
 - define impact update function
 - construct general loop structure of checking whether an impact
 	has occurred
-
+	
+- check: do we need to structure our loop based around a fixed timespan,
+	or around having a fixed number of impacts?
+	
+	
+extra shit
+- plot the trajectory over time
+- plot the hamiltonian of system over time - ****NOT DONE****
+- animate_double_pend
 
 P5
-- only start once first impact problem has been approached
+
+Euler-Lagrange Equations -DONE
+- define variables and constants
+- define x and y as a function of theta
+- make a substitution dict
+- define state vector
+- define KE, U, and lagrangian of system
+- compute non-constrained EL
+- solve
+
+DONE
+- define theta1dd, 2, 3 as sympy equations
+- convert to Python function with lambdify
+- make dxdt function
+- define ICs
+
+Pre-Impacts Work - DONE
+- define impact condition phi
+- define dL/dqdot, dl/dqdot * qdot - L, dphi/dq
+- sub in the variables from dL/dqdot with dummy variables
+	-> just a regular qdot for example, or xdot, or ydot, as syms
+
 
 
 P6
 
+Pre-Impacts Work
+- Define substitution dicts for q at tau+ and q at tau-,
+- make equations for the impact condition based on [eqn] at tau+ - [eqn] at tau-
+
+Impacts
+- define impact condition
+- define impact update
+- plug into simulate_impact()
 
 P7
 
