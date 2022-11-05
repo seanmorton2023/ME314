@@ -120,8 +120,6 @@ Pre-Impacts Work - DONE
 - sub in the variables from dL/dqdot with dummy variables
 	-> just a regular qdot for example, or xdot, or ydot, as syms
 
-
-
 P6
 
 Pre-Impacts Work
@@ -134,6 +132,9 @@ Impacts
 - plug into simulate_impact()
 
 P7
+
+**make sure to check the row_insert() function in the functions I defined in earlier
+homeworks. I wonder if the number of rows in that case is dynamic or not**
 
 
 P8
