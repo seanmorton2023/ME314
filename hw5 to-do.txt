@@ -10,6 +10,8 @@ integrate() and simulate() provided
 
 Take 2hrs to start, chug through, and hopefully get through the first 4 problems
 
+**before submission: make sure to write in 
+
 
 findings from Thursday OH:
 - there's nothing in problem 5 that says to solve the Euler-Lagrange equations for the
@@ -141,4 +143,6 @@ P8
 
 
 P9
+
+
 
