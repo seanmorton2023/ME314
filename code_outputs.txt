@@ -1,0 +1,17 @@
+places to include better detailed code outputs:
+
+page 8, energy functions and lagrangian
+page 8, EL equations
+page 9, solved E-L equatins
+
+problem 4:
+page 13, Lagrangian and L-simplified
+page 13, Hamiltonian
+
+problem 5:
+page 14, solved E-L equations
+
+
+page 21, expressions + solved E-L equations
+page 22, simplified E-L equations
+
