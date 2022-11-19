@@ -1,0 +1,11 @@
+
+based on interpretation of the problem notes, way to do the problem is
+- cannot solve for t = __ during the solving for theta at a given point
+	in time bc theta and thetad depend on t
+- modify RK4 to take a dependence on t as well, like in HW1
+	- simulate(), integrate(), and dxdt() need to pass t to rk4 as well
+	- already have the framework for this 
+- use the solve_constrained_EL() equation and modify:
+	- modify so we can combine with a matrix of forcing
+	- make a new dummy variable t_i that uses the current point
+		in time for computing forcing
