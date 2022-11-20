@@ -14,12 +14,27 @@ based on interpretation of the problem notes, way to do the problem is
 Steps:
 - SO2AndR2toSE2(): done
 - SO3AndR3toSE3() helper to create transf. matrices
-	- NOT done. make shapes generalizable to size n
-
-
-- InvSE3() matrix: helper to compute inverse of a transformation matrix
+	- possible error: sending p in as a numpy array
 - HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
 - UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
+
+- InvSE3() matrix: helper to compute inverse of a transformation matrix
 - SE3_ddt(): takes derivative of SE(3) matrix
 - SO3_ddt(): takes derivative of SO(3) matrix
-- 
+
+#save these for later
+
+def SE3_ddt(SE3mat):
+    '''Takes the derivative of a matrix in SE(3).
+    '''
+    pass
+
+def SO3_ddt(SO3mat):
+    '''Takes the derivative of a matrix in SO(3).
+    '''
+    pass
+
+def InertiaMatrix(rho, r_b, volume_limits, w):
+    '''Calculates the Inertia Matrix for a given volume of material.
+    '''
+    pass
