@@ -9,3 +9,17 @@ based on interpretation of the problem notes, way to do the problem is
 	- modify so we can combine with a matrix of forcing
 	- make a new dummy variable t_i that uses the current point
 		in time for computing forcing
+		
+		
+Steps:
+- SO2AndR2toSE2(): done
+- SO3AndR3toSE3() helper to create transf. matrices
+	- NOT done. make shapes generalizable to size n
+
+
+- InvSE3() matrix: helper to compute inverse of a transformation matrix
+- HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
+- UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
+- SE3_ddt(): takes derivative of SE(3) matrix
+- SO3_ddt(): takes derivative of SO(3) matrix
+- 
