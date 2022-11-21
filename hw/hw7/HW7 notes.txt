@@ -1,4 +1,53 @@
 
+
+TO-DO
+Helpers
+- SE3_ddt(): takes derivative of SE(3) matrix
+- SO3_ddt(): takes derivative of SO(3) matrix
+
+Main Event
+- make symbolic variables
+- use transformation matrices to find positions of things
+- define Lagrangian 
+- set up constrained + forced Euler-Lagrange EQs
+- Solve the above
+- attach plot of how I defined my trans. matrices
+
+
+Functions I will need for:
+- matrix math: already written for this hw
+- computing Lagrangian:
+	- 
+- Euler-Lagrange:
+	- compute_EL
+	- solve_constrained_EL
+	- simulate()
+	- rk4()
+- Animation:
+	- simulate_biped()
+		- modify the single pendulum animation
+
+
+
+
+
+
+	
+Done
+- SO2AndR2toSE2(): done
+- SO3AndR3toSE3() helper to create transf. matrices
+	- possible error: sending p in as a numpy array
+- HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
+- UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
+- InvSE3() matrix: helper to compute inverse of a transformation matrix
+
+
+
+
+
+
+Notes
+
 based on interpretation of the problem notes, way to do the problem is
 - cannot solve for t = __ during the solving for theta at a given point
 	in time bc theta and thetad depend on t
@@ -11,16 +60,10 @@ based on interpretation of the problem notes, way to do the problem is
 		in time for computing forcing
 		
 		
-Steps:
-- SO2AndR2toSE2(): done
-- SO3AndR3toSE3() helper to create transf. matrices
-	- possible error: sending p in as a numpy array
-- HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
-- UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
+		
 
-- InvSE3() matrix: helper to compute inverse of a transformation matrix
-- SE3_ddt(): takes derivative of SE(3) matrix
-- SO3_ddt(): takes derivative of SO(3) matrix
+
+
 
 #save these for later
 

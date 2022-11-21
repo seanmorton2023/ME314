@@ -1,0 +1,70 @@
+
+library of all the functions I've written in this class:
+
+HW0
+integrate(func, xspan, step_size)
+integrand0(t)
+integrand1(t)
+
+HW1
+compute_EL(lagrangian, q)
+solve_EL(eqn, q)
+rk4(dxdt, x, t, dt)
+euler(dxdt, x, t, dt)
+dxdt(t, s)
+simulate(f, x0, tspan, dt, integrate)
+
+HW2
+prev: c_EL, s_EL, rk4, Euler, simulate
+dxdt(t, s)
+KE(s)
+U(s)
+H(s)
+animate_double_pend(theta_array,L1=1,L2=1,T=10)
+animate_bead(xy_array,T=10)
+dxdt_p2(t,s)
+
+HW3
+prev: c_EL, s_EL, rk4, Euler, simulate
+dxdt(t, s)
+simulate_prob6(f, x0, tspan, dt, integrate)
+new_integrate(f, xt, dt)
+dxdt_new(s)
+solve_constrained_EL(lamb, phi, q, lhs)
+
+HW4
+prev: c_EL, s_EL, rk4, simulate, s_C_EL
+dxdt_p3(t, s)
+dxdt_p4(t, s)
+animate_cart_pend(traj_array,R=1,T=15)
+
+HW5
+prev: c_EL, s_EL, rk4, simulate, s_C_EL
+animate_single_pend(theta_array,L1=1,T=10)
+animate_triple_pend(theta_array, L1=1, L2=1, L3=1, T=10)
+dxdt_problem1(t,s)
+impact_condition_p4(s)
+impact_update_p4(s)
+simulate_impact(t_span, dt, ICs, integrate, dxdt, \
+	impact_condition, impact_update)
+H(s)
+dxdt_problem5
+impact_symbolic_eqs(phi, lagrangian, q, q_subs)
+gen_sym_subs(q, q_ext)
+impact_update_triple_pend(s)
+impact_condition_triple_pend(s)
+
+HW6
+prev: c_EL, s_EL, rk4, simulate, s_C_EL
+SO2AndR2ToSE2(R, p)
+SO2AndR2ToSE2_np(R, p)
+dxdt(t,s)
+H(s)
+animate_double_pend(theta_array,L1=1,L2=1,T=10)
+
+HW7
+SOnAndRnToSEn(R,p)
+SEnToSOnAndRn(SEnmat)
+HatVector3(w)
+UnhatMatrix3(w_hat)
+InvSEn(SEnmat)

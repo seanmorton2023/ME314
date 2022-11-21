@@ -1,0 +1,53 @@
+
+Including only the unique functions made/used in each HW:
+
+#----------------HW0------------------#
+integrate(func, xspan, step_size)
+integrand0(t)
+integrand1(t)
+
+#----------------HW1------------------#
+compute_EL(lagrangian, q)
+solve_EL(eqn, q)
+rk4(dxdt, x, t, dt)
+euler(dxdt, x, t, dt)
+dxdt(t, s)
+simulate(f, x0, tspan, dt, integrate)
+
+#----------------HW2------------------#
+KE(s)
+U(s)
+H(s)
+animate_double_pend(theta_array,L1=1,L2=1,T=10)
+animate_bead(xy_array,T=10)
+
+#----------------HW3------------------#
+simulate_prob6(f, x0, tspan, dt, integrate)
+new_integrate(f, xt, dt)
+solve_constrained_EL(lamb, phi, q, lhs)
+
+#----------------HW4------------------#
+animate_cart_pend(traj_array,R=1,T=15)
+
+#----------------HW5------------------#
+animate_single_pend(theta_array,L1=1,T=10)
+animate_triple_pend(theta_array, L1=1, L2=1, L3=1, T=10)
+impact_condition_p4(s)
+impact_update_p4(s)
+simulate_impact(t_span, dt, ICs, integrate, dxdt, \
+	impact_condition, impact_update)
+impact_symbolic_eqs(phi, lagrangian, q, q_subs)
+gen_sym_subs(q, q_ext)
+impact_update_triple_pend(s)
+impact_condition_triple_pend(s)
+
+#----------------HW6------------------#
+SO2AndR2ToSE2(R, p)
+SO2AndR2ToSE2_np(R, p)
+
+#----------------HW7------------------#
+SOnAndRnToSEn(R,p)
+SEnToSOnAndRn(SEnmat)
+HatVector3(w)
+UnhatMatrix3(w_hat)
+InvSEn(SEnmat)
