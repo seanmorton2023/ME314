@@ -27,6 +27,31 @@ Functions I will need for:
 	- simulate_biped()
 		- modify the single pendulum animation
 
+**it may be a good idea to use dictionaries for the state
+	vector - with 8 extended variables the possibility
+	of error grows**
+
+
+
+questions for Prof:
+- for homework question 1: you mentioned we don't need to
+	use omegahat in the explanation. how do we take the derivative
+	of R if we don't use e^omegahat?
+- can you explain why theta1 and theta1d have to be 
+	replaced with symbolic variables for calculating forces?
+- why do we need to use the body velocity in R6?
+	- if we need the time derivative of omega, will that be
+		a function of t or a symbolic substitution for thetad?
+- one of the hints is: "Be careful to consider the relationship 
+	between the frames and to not build in any implicit assumptions 
+	(such as assuming some variables are fixed)." My question is:
+	does this refer to state variables, or things like the inertia
+	matrix?
+- given that J is a constant, I never ended up using W in my
+	calculations. Was I supposed to, or is that only there 
+	for animation?
+	
+
 
 
 
