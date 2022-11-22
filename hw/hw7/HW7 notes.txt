@@ -27,6 +27,22 @@ Functions I will need for:
 	- simulate_biped()
 		- modify the single pendulum animation
 
+
+Major errors:
+- system isn't starting at the right theta1, theta2, ... thetan
+- system is dividing by 0
+	- explainable by the fact I have sines in my denominator - 
+		prof said that wasn't the right form
+- shape of output is wrong: each "row" is 2D, not a 1D vector
+- will need to find another way to test the animation function
+	w/ expected output
+		- find the shape of the output we need + reasonable
+			values for each var; make an interpolated array
+			based on it and test with that
+
+
+
+
 **it may be a good idea to use dictionaries for the state
 	vector - with 8 extended variables the possibility
 	of error grows**
@@ -37,19 +53,62 @@ questions for Prof:
 - for homework question 1: you mentioned we don't need to
 	use omegahat in the explanation. how do we take the derivative
 	of R if we don't use e^omegahat?
+		-2-line statement
+		- don't need matrix component
+		- think about properties of SO(n) and there aren't
+			a lot of choices
 - can you explain why theta1 and theta1d have to be 
 	replaced with symbolic variables for calculating forces?
+		- may or may not be needed; it's Jake's work
+		- if I don't have it working, can test with
+			single pendulum with torques applied at base
+		- recommends I check this by looking at results:
+			get theta1dd and sin^2(t/2) terms
+		
 - why do we need to use the body velocity in R6?
 	- if we need the time derivative of omega, will that be
 		a function of t or a symbolic substitution for thetad?
+		- see answer to above question
+		
+	- generally more convenient to write this down in terms
+		of 3d motions; omega needed
 - one of the hints is: "Be careful to consider the relationship 
 	between the frames and to not build in any implicit assumptions 
 	(such as assuming some variables are fixed)." My question is:
 	does this refer to state variables, or things like the inertia
-	matrix?
+	matrix?		
+		- don't assume pivot point is on the y axis; 
+			pivot has a position in both x and y
+		- if things are working it'll do a split; if things
+			are not working robot may fall over
 - given that J is a constant, I never ended up using W in my
 	calculations. Was I supposed to, or is that only there 
 	for animation?
+		- 
+- code question: my lambdify call isn't substituting t properly-
+	it's the only symbolic variable that's type Symbol, not
+	type Function(t). any thoughts?
+		- recommends I not haul around a symbolic variable
+			representation of t
+		- don't append t onto the state array; don't lambdify
+			with respect to t
+		- also recommends making a micro-example where a single
+			pend is forced by an external torque, then post about
+			it on a discussion board. said it should only take a few
+			minutes. and Jake will be happy to answer non-homework
+			problems in extreme depth
+		- a thought I had: if I want to try again with
+			the lambdify() version where we calculate using t,
+			could make ti a type Function(t), and then lambdify
+			after. if this works and gives good results, may not
+			need to go through as much effort in making an example
+			to test with
+		
+- a note: while talking about how the problem has a dependence
+	on sin^2(t), he said that there shouldn't be sin^2t in the
+	denominator - since it's a force and only on the "Right hand side",
+	sin^t(t) term should only be in numerator. masses, inertia,
+	will all potentially be in the denominator
 	
 
 
