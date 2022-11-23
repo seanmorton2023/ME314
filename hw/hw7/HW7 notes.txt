@@ -1,4 +1,25 @@
 
+Done
+- SO2AndR2toSE2(): done
+- SO3AndR3toSE3() helper to create transf. matrices
+	- possible error: sending p in as a numpy array
+- HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
+- UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
+- InvSE3() matrix: helper to compute inverse of a transformation matrix
+- Euler-Lagrange:
+	- compute_EL
+	- solve_constrained_EL
+	- simulate()
+	- rk4()
+- Animation:
+	- simulate_biped()
+		- modify the single pendulum animation
+- will need to find another way to test the animation function
+	w/ expected output
+		- find the shape of the output we need + reasonable
+			values for each var; make an interpolated array
+			based on it and test with that
+	
 
 TO-DO
 Helpers
@@ -12,21 +33,13 @@ Main Event
 - set up constrained + forced Euler-Lagrange EQs
 - Solve the above
 - attach plot of how I defined my trans. matrices
+- redefine kinetic energy terms according to new way we learned
+	in class
 
 
 Functions I will need for:
 - matrix math: already written for this hw
 - computing Lagrangian:
-	- 
-- Euler-Lagrange:
-	- compute_EL
-	- solve_constrained_EL
-	- simulate()
-	- rk4()
-- Animation:
-	- simulate_biped()
-		- modify the single pendulum animation
-
 
 Major errors:
 - system isn't starting at the right theta1, theta2, ... thetan
@@ -34,12 +47,11 @@ Major errors:
 	- explainable by the fact I have sines in my denominator - 
 		prof said that wasn't the right form
 - shape of output is wrong: each "row" is 2D, not a 1D vector
-- will need to find another way to test the animation function
-	w/ expected output
-		- find the shape of the output we need + reasonable
-			values for each var; make an interpolated array
-			based on it and test with that
-
+- completely redo definitions of L1 and L2 to match standard created
+	by problem
+		- same with theta2: initial condition is -pi/15 so have
+			direction convention be the same as theta1
+		- so far have changed Raa2 in the plotting function
 
 
 
@@ -48,6 +60,41 @@ Major errors:
 	of error grows**
 
 
+Notes
+
+based on interpretation of the problem notes, way to do the problem is
+- cannot solve for t = __ during the solving for theta at a given point
+	in time bc theta and thetad depend on t
+- modify RK4 to take a dependence on t as well, like in HW1
+	- simulate(), integrate(), and dxdt() need to pass t to rk4 as well
+	- already have the framework for this 
+- use the solve_constrained_EL() equation and modify:
+	- modify so we can combine with a matrix of forcing
+	- make a new dummy variable t_i that uses the current point
+		in time for computing forcing
+
+
+#save these for later
+
+def SE3_ddt(SE3mat):
+    '''Takes the derivative of a matrix in SE(3).
+    '''
+    pass
+
+def SO3_ddt(SO3mat):
+    '''Takes the derivative of a matrix in SO(3).
+    '''
+    pass
+
+def InertiaMatrix(rho, r_b, volume_limits, w):
+    '''Calculates the Inertia Matrix for a given volume of material.
+    '''
+    pass
+	
+	
+__________
+
+Q&A
 
 questions for Prof:
 - for homework question 1: you mentioned we don't need to
@@ -109,59 +156,3 @@ questions for Prof:
 	denominator - since it's a force and only on the "Right hand side",
 	sin^t(t) term should only be in numerator. masses, inertia,
 	will all potentially be in the denominator
-	
-
-
-
-
-
-
-	
-Done
-- SO2AndR2toSE2(): done
-- SO3AndR3toSE3() helper to create transf. matrices
-	- possible error: sending p in as a numpy array
-- HatVector(): turns a R2 or R3 vcetor to a so(2) or so(3) matrix
-- UnhatMatrix(): turns a so(3) or so(2) matric to a R3 or R2 vector
-- InvSE3() matrix: helper to compute inverse of a transformation matrix
-
-
-
-
-
-
-Notes
-
-based on interpretation of the problem notes, way to do the problem is
-- cannot solve for t = __ during the solving for theta at a given point
-	in time bc theta and thetad depend on t
-- modify RK4 to take a dependence on t as well, like in HW1
-	- simulate(), integrate(), and dxdt() need to pass t to rk4 as well
-	- already have the framework for this 
-- use the solve_constrained_EL() equation and modify:
-	- modify so we can combine with a matrix of forcing
-	- make a new dummy variable t_i that uses the current point
-		in time for computing forcing
-		
-		
-		
-
-
-
-
-#save these for later
-
-def SE3_ddt(SE3mat):
-    '''Takes the derivative of a matrix in SE(3).
-    '''
-    pass
-
-def SO3_ddt(SO3mat):
-    '''Takes the derivative of a matrix in SO(3).
-    '''
-    pass
-
-def InertiaMatrix(rho, r_b, volume_limits, w):
-    '''Calculates the Inertia Matrix for a given volume of material.
-    '''
-    pass
