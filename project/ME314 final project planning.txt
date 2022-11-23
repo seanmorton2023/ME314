@@ -31,16 +31,38 @@ GUIs with mouse motion event handlers:
 - Tkinter
 - Matplotlib
 - PyQT5
+	- uses backend of either Matplotlib or PyQTGraph. PyQTGraph
+		seems limited compared to the capabilities of Matplotlib.
 - Pygame (not a very professional choice)
+	- moreover: uses things like Tkinter in its backend
 - PySide 2
 - Kivy
+	- seems useful for creating web apps, but the plotting 
+		backend uses numpy and matplotlib
 - WxPython
 
 GUIs without motion event handlers:
 - Plotly - buggy and slow
 - Seaborn - uses Matplotlib mouse motion
 
+Current decision re/ GUI drawing:
+- doesn't seem to be a very good method of plotting points 
+	interactively with the base capabilities of Matplotlib. three options:
+		- use advanced Matplotlib; modify canvas.draw() so that interval
+			is faster than the current 10fps
+		- use the matplotlib Animation() capabilities: FuncAnimation
+			and ArtistAnimation()
+		- just use Tkinter to plot points, lines, options 
+
+
 
 Default first to libraries I know. Default next to things
 I want to get better at. In all cases consider what looks good and
 is fast.
+
+
+
+Questions:
+- is there a way to make interactive GUIs in Plotly, with a mouseover
+	event? Otherwise I'm considering using Matplotlib or TK
+	

@@ -52,7 +52,8 @@ Major errors:
 		- same with theta2: initial condition is -pi/15 so have
 			direction convention be the same as theta1
 		- so far have changed Raa2 in the plotting function
-
+- SOnAndRnToSEn() error: 
+	Sympy matrices, when indexed, sometimes turn into lists.
 
 
 **it may be a good idea to use dictionaries for the state
