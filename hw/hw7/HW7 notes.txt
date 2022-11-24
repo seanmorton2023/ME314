@@ -54,7 +54,11 @@ Major errors:
 		- so far have changed Raa2 in the plotting function
 - SOnAndRnToSEn() error: 
 	Sympy matrices, when indexed, sometimes turn into lists.
-
+- test out the error checking I did on UnhatMatrix3, for use in 
+	making sure my transformation matrix multiplications Ginverse*Gdot
+	all go well
+- included a substitution of L1 and L2 for just L in Solve_EL_LHS,
+	which I will need to take out during the project.
 
 **it may be a good idea to use dictionaries for the state
 	vector - with 8 extended variables the possibility
