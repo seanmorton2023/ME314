@@ -35,6 +35,13 @@ Main Event
 - attach plot of how I defined my trans. matrices
 - redefine kinetic energy terms according to new way we learned
 	in class
+- in: 4:07, out: quit the sim at 4:47
+- to speed up results: recommended to set simplify = false, rational=false
+https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performance
+	during solving. rational thing can cause issues though
+- check on lambda1 and lambda2 - lambda2 is multiplied by theta1 which seems
+	odd - would expect lambda1*f(theta1)
+
 
 
 Functions I will need for:
