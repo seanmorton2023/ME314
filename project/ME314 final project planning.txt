@@ -45,6 +45,25 @@ GUIs without motion event handlers:
 - Plotly - buggy and slow
 - Seaborn - uses Matplotlib mouse motion
 
+
+To-Do:
+- decide on sign convention for theta1 and theta2 - 
+	whether or not one will be positive. will def affect results
+- add in a method for exiting the Tk() loop manually
+- add in gridlines: can make a function for it based on a number
+	of gridlines and a screen size, or on a dist. between 
+- check: I don't know that I calculated inertia properly; see if I need
+	to consider rhat_b^T * rhat_b. didn't have that and it may cause problemse
+- Some of the helper functions have been changed in the
+	final project, so I need to port them over to
+	the HW7 code. I've updated the following functions:
+	- CalculateVb6
+	- UnhatMatrix3
+
+
+
+
+
 Current decision re/ GUI drawing:
 - doesn't seem to be a very good method of plotting points 
 	interactively with the base capabilities of Matplotlib. three options:
