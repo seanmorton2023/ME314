@@ -46,8 +46,11 @@ SO2AndR2ToSE2(R, p)
 SO2AndR2ToSE2_np(R, p)
 
 #----------------HW7------------------#
+
+Matrix Operations:
 SOnAndRnToSEn(R,p)
 SEnToSOnAndRn(SEnmat)
 HatVector3(w)
 UnhatMatrix3(w_hat)
 InvSEn(SEnmat)
+

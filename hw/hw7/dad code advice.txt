@@ -1,0 +1,2 @@
+Dad's advice on simplifying code execution:
+- look at ways to make the code example smaller

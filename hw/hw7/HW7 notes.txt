@@ -168,3 +168,9 @@ questions for Prof:
 	denominator - since it's a force and only on the "Right hand side",
 	sin^t(t) term should only be in numerator. masses, inertia,
 	will all potentially be in the denominator
+	
+	in 9:07
+	
+	
+- canceled - sub in the values of L1 and L2 in the 
+	RHS right after I do the subs for the RHS
