@@ -41,7 +41,24 @@ https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performan
 	during solving. rational thing can cause issues though
 - check on lambda1 and lambda2 - lambda2 is multiplied by theta1 which seems
 	odd - would expect lambda1*f(theta1)
+	
+- findings from Brad:
+	- define theta1 as positive only
+- make sure to attach a pic of how you defined frames so that 
+	they know what "aa1" means. they might still mark me down
+- make a rotation matrix function
+- new thing to try: sub in symbolic variables 
+	to potentially break the link between each thing and the derivatives
+- will remove all simplify() calls and remove the check in UnhatMatrix3 that
+	checks that a matrix is skew-symm, to see if it improves performance
 
+- things to try:
+	- simplify outputs of the symbolic equations *after* the manual
+		symbolic solve
+	- retry solving the version of the equations without the q1, q2, ... variables
+		-both without the simplify() calls beforehand and
+		- with the simplify calls beforehand
+	
 
 
 Functions I will need for:

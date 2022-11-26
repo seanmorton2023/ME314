@@ -1,2 +1,8 @@
 Dad's advice on simplifying code execution:
 - look at ways to make the code example smaller
+- Linux has functions called Ptrace() and Strace() that are
+	able to step through what's happening in each process - 
+	could see if I could track execution like that
+- each function call adds to the stack, so each function call
+	adds additional time
+- user documentation for the library functions is key
