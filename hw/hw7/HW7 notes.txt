@@ -58,6 +58,7 @@ https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performan
 	- retry solving the version of the equations without the q1, q2, ... variables
 		-both without the simplify() calls beforehand and
 		- with the simplify calls beforehand
+<<<<<<< HEAD
 - this is interesting: dxdt() gets called 4000 times for 1000 timesteps. I guess
 	this must be because of Runge-Kutta. this prevented me from appending to 
 	F1_array and F2_array inside dxdt()
@@ -66,6 +67,8 @@ https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performan
 		- test cases
 		- CTRL-F for "debug"
 		- print statements
+=======
+>>>>>>> parent of 9a8f284 (HW7 milestone: right output achieved)
 	
 
 
