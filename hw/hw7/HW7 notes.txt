@@ -63,6 +63,9 @@ https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performan
 	F1_array and F2_array inside dxdt()
 - you'll need to make sure to do a good job of cleaning up all the unnecessary crap
 	before you submit
+		- test cases
+		- CTRL-F for "debug"
+		- print statements
 	
 
 
