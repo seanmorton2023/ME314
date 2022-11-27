@@ -66,6 +66,18 @@ https://stackoverflow.com/questions/37954278/poor-sympy-linsolve-solve-performan
 		- test cases
 		- CTRL-F for "debug"
 		- print statements
+- Think I found the root cause behind everything.
+	- There are negative signs on my row-3 and row-4 E-L left-hand-side equations
+	- previously I dismissed these, but with a set sign on the forces, 
+		a negative sign on these rows means disastrous results
+	- rationale: comes from the way I defined my E-L equations, I think. haven't
+		verified yet. previously I had written E-L equations with arbitrary signs
+		on dL/dq and d/dt(dL/dqdot). with constraints, this doesn't matter. with no
+		constraints or forcing, this doesn't matter. with predefined forces, this
+		DOES matter - need to follow the convention they had in the book.
+
+
+
 
 
 Functions I will need for:
@@ -110,23 +122,6 @@ based on interpretation of the problem notes, way to do the problem is
 		in time for computing forcing
 
 
-#save these for later
-
-def SE3_ddt(SE3mat):
-    '''Takes the derivative of a matrix in SE(3).
-    '''
-    pass
-
-def SO3_ddt(SO3mat):
-    '''Takes the derivative of a matrix in SO(3).
-    '''
-    pass
-
-def InertiaMatrix(rho, r_b, volume_limits, w):
-    '''Calculates the Inertia Matrix for a given volume of material.
-    '''
-    pass
-	
 	
 __________
 
