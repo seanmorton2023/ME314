@@ -15,6 +15,14 @@ before we get too invested in the interactive UI
 	be screwed if we have to calculate in Sympy on the fly -
 	this would kill the possibiity of this running in real time
 
+***
+Make sure to use the new compute_EL function from HW7 that works
+properly!
+***
+
+**it may be a good idea to use dictionaries for the state
+	vector - with 8 extended variables the possibility
+	of error grows**
 
 
 Mathematical Calculations
@@ -31,7 +39,7 @@ Mathematical Calculations
 - define impact updates for each possible impact
 - redefine inertia matrix: assume a nonzero thickness in z direction
 	so that results make more sense
-
+- make a SO3_2d() function for making rotation mats?
 
 User Interface
 - write SpringForce function- 1hr
