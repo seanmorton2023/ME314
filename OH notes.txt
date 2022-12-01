@@ -1,0 +1,47 @@
+
+Notes fro OH - 11-28
+
+Q: I really want to make my system run in real time. 
+	I'm worried about there being crazy conplicated impact
+	conditions like the ones in the triple pendulum. Do you think
+	I'll be able to have it in numerical form by the time the user
+	does the sim, or will we have to do a symbolic solve?
+	
+Key findings: Jake had a similar project. Had some key moments when he was showing
+me his results:
+- used Tkinter for a GUI
+- set the state before the sim, user didn't interact with it
+- Was a bouncing ball hitting a paddle and bouncing off walls. 
+	He had some PID stuff to generate paddle posn; not important
+- On each impact: there was a **2 second** slowdown until next frame
+- Did a symbolic solve on each impact - reason for the slowness
+	- this would kill my project idea
+	- Says there's room for optimization: says you can lambdify parts
+		of the EQ and then leave parts of the EQ to solve laters
+		
+- what ended up taking the most time was the solve() call after each
+	impact update
+- Q: do you think turning it into a numerical function was possible?
+	A: says it probably was - it was a simple enough collision.
+		Remembers it took a really long time trying to solve, but never
+		let it solve. also didn't try subsolvers like trigsolve() and trigsimp()
+		says that's something to try
+		--> told him about manual = True flag; he said that's super interesting
+			and worth trying
+			
+- said he definitely recommends solving the general case - will be a lot better
+	for real-time than calling sym.solve() in real time
+		
+**says you can save out the Sympy solutions from your Jupyter notebook. so
+	even if the general case takes an hour to solve, can save the result
+	and load it in at next usage of Jupyter NB***
+	
+	- used Dill rather than Pickle; not specific to Sympy but works
+	- try to enforce it lambdifying to Numpy - has diff. options under
+		the hood but it's not a guarantee
+	
+Action items: I still want to talk to Todd to ask about this but 
+	I feel more confident to give it a try. Reason to still ask is
+	because Jake's system with fewer configuration variables took
+	a long time to solve / didn't solve, and mine has more variables
+	

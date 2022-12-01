@@ -1,28 +1,55 @@
 
 To-Do:
 
+Milestones
+1. simulation runs with no damping, no user interaction; not real time,
+	just initial conditions and simulation
+		- plot Hamiltonian over time, make sure it's near zero
+		- requires impact condition handling
+		- requires plotting on the Tkinter Gui to be sorted out
+		- requires impact conditions to be symbolically solved;
+			Euler-Lagrange equations to be sorted out for non-impact times;
+			results to be pickled and saved for later
+		
+		
+		
+2. simulation runs with damping, no user interaction, base not moving
+	- objects should come to rest
+	- requires damping forces to be calculated and applied to a new
+	- forced version of E-L calculations and solved
+		- then pickled
+		- make sure to add Fbase,x and Fbase,y as forces applied to 
+			the x and y states. Will be zero at first but this saves
+			us extra computation time and energy later
+	- tune damping so it gives believable behavior
+	- requires more in-depth handling of potential simult-impact cases
+	
+3. simulation runs with damping and a sinusoidal forcing applied to the
+	base of the clackers
+	- should not require solving forced E-L equations again
+	- will require new formulation of forces - give a large sinusoidal
+		component in y direction and small component in x direction
+		so we can test both of those out
+	- may require more tuning of damping and mass
+	
+4. simulation runs with no user input and base of pendula following a 
+	predetermined path using springForce() method
+	- can use same forcing path as before
+	- instead of following immediately will follow a 1st-order exponential
+		decay with a spring force and damping in direction of the cursor
+	- will require plotting posn of the cursor on the GUI
+	
+5. simulation runs in real time with mouse posn and springForce
+	- all the GUI and time-optimization stuff not approached ini
+		prev. milestones
+	- will need to handle:
+		- when does the data input by the user get passed to next sim step
+		- what will be the limits on time/array size for the simulation
+		- what value of dt to use
+		- when does the GUI update get called
+		- how is framerate dealt with in Tkinter
 
-####GLARING ISSUE####
 
-I have no idea how long it takes for the impact condition and
-update portion of things to run. This will greatly affect 
-playability of the simulation. See if we can get a sense
-before we get too invested in the interactive UI
-
----> I want to do more with the UI but this might take precedence. 
-	See if the impact conditions can be solved beforehand, like
-	HW5 problem1, in a reasonable amount of time. if not, I may
-	be screwed if we have to calculate in Sympy on the fly -
-	this would kill the possibiity of this running in real time
-
-***
-Make sure to use the new compute_EL function from HW7 that works
-properly!
-***
-
-**it may be a good idea to use dictionaries for the state
-	vector - with 8 extended variables the possibility
-	of error grows**
 
 
 Mathematical Calculations
@@ -57,6 +84,8 @@ Questions:
 	operations similar to this
 	
 	
+
+	
 	
 #----------------------------#
 
@@ -64,3 +93,42 @@ DONE
 
 - add in gridlines: can make a function for it based on a number
 	of gridlines and a screen size, or on a dist. between 
+***
+Make sure to use the new compute_EL function from HW7 that works
+properly!
+***
+
+
+#-----------------------------#
+
+Notes from finding things out:
+
+####GLARING ISSUE####
+
+I have no idea how long it takes for the impact condition and
+update portion of things to run. This will greatly affect 
+playability of the simulation. See if we can get a sense
+before we get too invested in the interactive UI
+
+---> I want to do more with the UI but this might take precedence. 
+	See if the impact conditions can be solved beforehand, like
+	HW5 problem1, in a reasonable amount of time. if not, I may
+	be screwed if we have to calculate in Sympy on the fly -
+	this would kill the possibiity of this running in real time
+	
+- Prof says:
+	- For balls fixed on a string, the impact condition is similar
+		to theta1 = theta2: with some offset due to the width of cube
+	- for rotating balls:
+		- **he says that in most cases like these, can be solved symbolically**
+		- if you can't end up solving it symbolically before it runs,
+			there's another way - can plug in the numbers and solve
+			numerically - ROOT FINDING SOFTWARE
+				- this is my way out if Sympy fails me
+
+
+	
+**it may be a good idea to use dictionaries for the state
+	vector - with 8 extended variables the possibility
+	of error grows**
+
