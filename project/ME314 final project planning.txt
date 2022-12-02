@@ -16,6 +16,14 @@ Milestones
 			Euler-Lagrange equations to be sorted out for non-impact times;
 			results to be pickled and saved for later
 		
+		issue: current coords of the box in the GUI frame are way too
+		small - on the order of 1 pixel - done
+		next, turn float positions into ints so they render properly - done
+		next, find out why coordinates calculated by program (which seem box shaped)
+			aren't rendering on the screen
+			
+		after, debug location of boxes on screen
+		
 		
 		
 2. simulation runs with damping, no user interaction, base not moving

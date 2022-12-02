@@ -33,3 +33,11 @@ Current decision re/ GUI drawing:
 Default first to libraries I know. Default next to things
 I want to get better at. In all cases consider what looks good and
 is fast.
+
+
+Animation findings
+- There are 2 methods to do frame animation:
+	- window.update() (or root.update() I think) and time.sleep()
+	- create a Timer object, and onTimer, do an update
+		- I like this b/c it uses the concept of interrupts rather
+			than sleeping after a prev. code portion of unknown time
