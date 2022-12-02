@@ -4,9 +4,14 @@ To-Do:
 Milestones
 1. simulation runs with no damping, no user interaction; not real time,
 	just initial conditions and simulation
+		- simulate the system with no impacts
+			- will help determine if the E-L equations are correct
+			- requires plotting on the Tkinter Gui to be sorted out
+			- for later: make a function that converts from q coords to
+				GUI coords, based on code written in current anim function
+
 		- plot Hamiltonian over time, make sure it's near zero
 		- requires impact condition handling
-		- requires plotting on the Tkinter Gui to be sorted out
 		- requires impact conditions to be symbolically solved;
 			Euler-Lagrange equations to be sorted out for non-impact times;
 			results to be pickled and saved for later
@@ -48,6 +53,11 @@ Milestones
 		- what value of dt to use
 		- when does the GUI update get called
 		- how is framerate dealt with in Tkinter
+	- Academic integrity:
+		- make a note in the project submission that some functions 
+			for GUI plotting were taken from another class
+		- in the docstring of each function, put "note: this function was taken
+			from CS110' or something
 
 
 
