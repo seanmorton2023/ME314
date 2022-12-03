@@ -112,13 +112,13 @@ class GUI:
         Rac = np.array([
             [np.cos(theta1), -np.sin(theta1), 0],
             [np.sin(theta1),  np.cos(theta1), 0],
-            [              0,                0, 1],
+            [             0,               0, 1],
         ])
 
         ReB1 = np.array([
             [np.cos(phi1), -np.sin(phi1), 0],
             [np.sin(phi1),  np.cos(phi1), 0],
-            [            0,              0, 1],
+            [           0,             0, 1],
         ])
 
         p_ce = np.array([0, -self.L, 0])
@@ -208,10 +208,11 @@ class GUI:
         #apply updates to object posns
         if self.q_ind == 0:
             #create objects on the canvas
-            self.canvas.create_line(*box1_vert_gui, tag='box1', fill='gray')
-            self.canvas.create_line(*box2_vert_gui, tag='box2', fill='gray')
-            self.canvas.create_line(*line1_coords_gui, tag='line1', fill='gray')
-            self.canvas.create_line(*line2_coords_gui, tag='line2', fill='gray')
+            linewidth = 2
+            self.canvas.create_line(*box1_vert_gui,    tag='box1',  fill='black', width=linewidth)
+            self.canvas.create_line(*box2_vert_gui,    tag='box2',  fill='black', width=linewidth)
+            self.canvas.create_line(*line1_coords_gui, tag='line1', fill='blue', width=linewidth)
+            self.canvas.create_line(*line2_coords_gui, tag='line2', fill='red', width=linewidth)
 
         else:
             #update positions of the objects by tags
@@ -225,9 +226,9 @@ class GUI:
     
         #---------------------#
 
-        print("\nGUI debug:")
-        print(f"q: \n{q}")
-        print(f"box1_vert_gui: \n{box1_vert_gui}")
+        #print("\nGUI debug:")
+        #print(f"q: \n{q}")
+        #print(f"box1_vert_gui: \n{box1_vert_gui}")
     
         #update the frame delay of the timer object
         self.timer_handle = self.root.after(frame_delay, self.on_timer)

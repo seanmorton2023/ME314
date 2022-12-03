@@ -14,7 +14,7 @@ from helpers import *
 from plotting_helpers import *
 
 #framerate_ms = 20 #50fps; round number preferred
-framerate_ms = 5000
+framerate_ms = 20
 
 #define our sample trajectories for each angle
 dt = 0.01
@@ -22,8 +22,8 @@ t_array = np.arange(0, 10, dt)
 q_array_test = np.array([
     np.zeros(len(t_array)),
     np.sin(2 * np.pi * t_array) + 1,
-    (np.pi/8) * (1 - (np.sin(2 * np.pi * t_array))**2),
-    -((np.pi/8) * (1 - np.sin(2 * np.pi * t_array))**2),
+    (  np.pi/16) * (1 - np.sin(2 * np.pi * t_array))**2,
+    -((np.pi/16) * (1 - np.sin(2 * np.pi * t_array))**2),
     2 * np.pi * t_array,
     -2 * np.pi * t_array
 ]).T
@@ -41,7 +41,7 @@ gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, framerate_ms)
 
 s_frame       = make_coordsys(gui.canvas, win_width/2, win_height/2, coordsys_len, tag='s_frame')
 make_grid(                    gui.canvas, win_width, win_height, pixels_to_unit)
-user_coordsys = make_coordsys(gui.canvas, 300, 400, coordsys_len, tag='user_pos')
+user_coordsys = make_coordsys(gui.canvas, win_width/2, win_height/2, coordsys_len, tag='user_pos')
 s_frame =       make_coordsys(gui.canvas, win_width/2, win_height/2, coordsys_len, tag='s_frame')
 
 #-------------------prep the canvas and display it------------#

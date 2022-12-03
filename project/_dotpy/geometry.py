@@ -82,7 +82,7 @@ GsB1 = Gse @ GeB1 #formerly Gsg
 #-------------------------------------#
 
 #geometry for plotting
-L_num = 1
+L_num = 2
 w_num = 1/3.0
 
 win_height = 600
@@ -91,15 +91,15 @@ pixels_to_unit = 100
 coordsys_len = 50
 
 vertices_mat = w_num * np.array([
-    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1],
-    [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1],
-    [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1],
-    [ np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1],
-    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1], #add first vertex onto end of matrix again so line wraps around
+    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #1/... term ensures last translation term is 1
+    [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num],
+    [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
+    [ np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
+    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
 ]).T #in "bar" form  so they can be multiplied by trans. matrix
 
 line_coords_mat = np.array([
-    [0,  0, 0, 1],
+    [0,     0, 0, 1],
     [0, -L_num, 0, 1],
 ]).T
 
@@ -113,8 +113,8 @@ height = win_height // pixels_to_unit
 GrGUI = np.array([
     [width/win_width,    0, 0, 0],
     [0, -height/win_height, 0, 0],
-    [0,                      0, 1, 0],
-    [0,                      0, 0, 1]
+    [0,                  0, 1, 0],
+    [0,                  0, 0, 1]
 ]) 
 
 Grs = SOnAndRnToSEn(np.identity(3), [width/2, -height/2, 0])
