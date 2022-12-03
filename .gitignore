@@ -5,3 +5,13 @@
 *.jpeg
 *.avi
 *.mp4
+
+/project/.vs/*
+*.pyc
+*.cpython-310.pyc
+project/_dotpy/__pycache__/el_equations.cpython-310.pyc
+project/_dotpy/__pycache__/geometry.cpython-310.pyc
+project/_dotpy/__pycache__/GUI.cpython-310.pyc
+project/_dotpy/__pycache__/helpers.cpython-310.pyc
+project/_dotpy/__pycache__/impacts.cpython-310.pyc
+project/_dotpy/__pycache__/plotting_helpers.cpython-310.pyc

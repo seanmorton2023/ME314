@@ -1,9 +1,12 @@
 import sympy as sym
 import numpy as np
+import pandas as pd
+
 import dill
 import time
 from tqdm import tqdm
 import tkinter as tk
+
 
 #from el_equations import *
 #from impacts import *
@@ -21,7 +24,7 @@ dt = 0.01
 t_array = np.arange(0, 10, dt)
 q_array_test = np.array([
     np.zeros(len(t_array)),
-    np.sin(2 * np.pi * t_array) + 1,
+    0.5*(np.sin(2 * np.pi * t_array) + 1),
     (  np.pi/16) * (1 - np.sin(2 * np.pi * t_array))**2,
     -((np.pi/16) * (1 - np.sin(2 * np.pi * t_array))**2),
     2 * np.pi * t_array,
@@ -29,6 +32,7 @@ q_array_test = np.array([
 ]).T
 
 q_array = q_array_test[:]
+#q_array = pd.read_csv('../data/q_array.csv', header=None).to_numpy()
 
 #----------------initialize GUI----------------------#
 gui = GUI(win_height, win_width) #namespace for variables: geometry.py
@@ -38,7 +42,6 @@ gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, framerate_ms)
 #----------------put things on the canvas----------------------#
 
 #root and canvas defined in event handlers file
-
 s_frame       = make_coordsys(gui.canvas, win_width/2, win_height/2, coordsys_len, tag='s_frame')
 make_grid(                    gui.canvas, win_width, win_height, pixels_to_unit)
 user_coordsys = make_coordsys(gui.canvas, win_width/2, win_height/2, coordsys_len, tag='user_pos')

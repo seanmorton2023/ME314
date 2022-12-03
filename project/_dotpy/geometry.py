@@ -23,10 +23,15 @@ q_ext = sym.Matrix([q, q.diff(t)])
 
 subs_dict = {
     L : 1,
-    w : 1/3.0,
+    w : 1/6.0,
     m : 1,
     g : 9.81,
 }
+
+#make sure geometry for plotting matches 
+#the variables for the E-L equations!
+L_num = 1
+w_num = 1/6.0
 
 #---------------right side---------------#
 
@@ -81,13 +86,11 @@ GsB1 = Gse @ GeB1 #formerly Gsg
 
 #-------------------------------------#
 
-#geometry for plotting
-L_num = 2
-w_num = 1/3.0
+#Lnum and wnum defined under subs_dict
 
 win_height = 600
 win_width = 800
-pixels_to_unit = 100
+pixels_to_unit = 200
 coordsys_len = 50
 
 vertices_mat = w_num * np.array([
@@ -119,3 +122,34 @@ GrGUI = np.array([
 
 Grs = SOnAndRnToSEn(np.identity(3), [width/2, -height/2, 0])
 GsGUI = np.dot(InvSEn(Grs), GrGUI)
+
+#define important positions      
+ym1 = ( GsB1    @ sym.Matrix([0, 0, 0, 1]) )[1]
+ym2 = ( GsB2    @ sym.Matrix([0, 0, 0, 1]) )[1]
+posn_top = Gsa @ sym.Matrix([0, 0, 0, 1])
+
+
+#----------------------------------------------#
+
+#inertial properties of system, in symbolic form.
+#reused in both Lagrangian and Hamiltonian calculation,
+#so define it once
+
+VbB1 = CalculateVb6(GsB1,t)
+VbB2 = CalculateVb6(GsB2,t)
+
+scriptI_B1 = m * sym.Matrix([
+    [w**2,    0,      0],
+    [   0, w**2,      0],
+    [   0,    0, 2*w**2]
+])
+
+scriptI_B2 = m * sym.Matrix([
+    [w**2,    0,      0],
+    [   0, w**2,      0],
+    [   0,    0, 2*w**2]
+])
+
+inertia_B1 = InertiaMatrix6(m, scriptI_B1)
+inertia_B2 = InertiaMatrix6(m, scriptI_B2)
+

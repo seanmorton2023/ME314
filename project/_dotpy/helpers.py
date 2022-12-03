@@ -4,6 +4,8 @@ import dill
 import time
 from tqdm import tqdm
 
+from geometry import *
+
 #-----------GEOMETRIC FUNCTIONS-----------#
 
 def SOnAndRnToSEn(R, p):
@@ -167,7 +169,7 @@ def UnhatMatrix4(mat):
     else:
         raise Exception("Unexpected datatype in UnhatMatrix4")
     
-def CalculateVb6(G):
+def CalculateVb6(G,t):
     '''Calculate the body velocity, a 6D vector [v, w], given a trans-
     formation matrix G from one frame to another.
     '''
@@ -182,7 +184,7 @@ def CalculateVb6(G):
 
 #-----------EULER-LAGRANGE -----------#
 
-def compute_EL_lhs(lagrangian, q):
+def compute_EL_lhs(lagrangian, q, t):
     '''
     Helper function for computing the Euler-Lagrange equations for a given system,
     so I don't have to keep writing it out over and over again.
@@ -223,7 +225,7 @@ def format_solns(soln):
 
     return eqns_solved
 
-#-----------DILL FUNCTIONS-----------#
+#-----------DATA SAVING FUNCTIONS-----------#
 
 
 def dill_dump(filename, data):
@@ -236,6 +238,25 @@ def dill_load(filename):
     with open(filename, 'rb') as f:
         data = dill.load(f)
     return data
+
+def write_csv_line(csv_filename, data):
+    #Appends a single line of data to a CSV file.
+    with open(csv_filename, 'a') as f:
+        data_str = ','.join([str(i) for i in data]) + '\n'
+        f.write(data_str)
+
+def write_csv_mat(csv_filename, mat):
+    #Clears out existing data in a CSV file and writes a new matrix
+    #of data to the file.
+
+    f = open(csv_filename, 'w') #clear out old data
+    f.close()
+
+    #datatype handling
+    mat = np.matrix(mat).tolist()
+    print("\nSaving data...")
+    for row in tqdm(mat):
+            write_csv_line(csv_filename, row)
 
 #-----------TESTING FUNCTIONS-----------#
 
@@ -370,7 +391,7 @@ def TestVb6():
     ])
 
     G = SOnAndRnToSEn(R, [x,y,0])
-    V = CalculateVb6(G)
+    V = CalculateVb6(G,t)
     print("\nV:")
     display(V)
 

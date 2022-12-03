@@ -21,7 +21,7 @@ class GUI:
 
         #future improvement: should inherit from the Tk class
         self.root = tk.Tk()
-        self.root.title("Final Project")
+        self.root.title("Clacker Balls Simulation")
         self.canvas = tk.Canvas(self.root, bg="white", height=win_height, width=win_width)
         self.win_height = win_height
         self.win_width = win_width
