@@ -14,6 +14,11 @@ def impact_condition(s):
     Returns: a logical true/false as to whether any impact condition was met;
         list of indices of impact conditions that were met
     '''
+
+    v11x_B2_np, v11y_B2_np, v12x_B2_np, v12y_B2_np, \
+    v13x_B2_np, v13y_B2_np, v14x_B2_np, v14y_B2_np, \
+    v21x_B1_np, v21y_B1_np, v22x_B1_np, v22y_B1_np, \
+    v23x_B1_np, v23y_B1_np, v24x_B1_np, v24y_B1_np  = vertices_list_np
     
     impact_conds = np.array([
         -wval/2.0 < v11x_B2_np(s) < wval/2.0   and   -wval/2.0 < v11y_B2_np(s) < wval/2.0,
@@ -106,77 +111,175 @@ def filter_phiq(impact_indices, phi_indices):
     valid_phiq = phi_indices[c]  
     return valid_phiq                 #returns the phi(q) equations that both evaluate to ~0 and
                                        #are related to an impact condition that has been met
+
+def calculate_sym_vertices():
+    '''
+    Calculates 16 symbolic expressions to describe the vertices of the
+    2 boxes in the system - 4 vertices * 2 coords(x,y) * 2 boxes.
     
-#impact conditions
+    This is a moderately time-consuming operation (3min) so the output
+    will be saved to a file to prevent losing data.
 
-#define positions of vertices
-v1bar = w*sym.Matrix([ 1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
-v2bar = w*sym.Matrix([-1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
-v3bar = w*sym.Matrix([-1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
-v4bar = w*sym.Matrix([ 1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
+    Returns: 16 symbolic expressions for vijn_Bk, where i = 1-2 (box#), 
+    j = 1-4 (vertex#), k = 2-1 (opposite of i #)
+    '''
 
-GB1B2 = InvSEn(GsB1) @ GsB2
-GB2B1 = InvSEn(GB1B2)
+    #define positions of vertices in boxes' home frames
+    v1bar = w*sym.Matrix([ 1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
+    v2bar = w*sym.Matrix([-1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
+    v3bar = w*sym.Matrix([-1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
+    v4bar = w*sym.Matrix([ 1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
 
-#subscripts: let v12 mean "the 2nd vertex of the 1st body"\
-#the home frame of v1n is in body 1; impact cond. requires posn in 2nd body frame
-v11_B2 = sym.simplify(GB2B1 @ v1bar)
-v12_B2 = sym.simplify(GB2B1 @ v2bar)
-v13_B2 = sym.simplify(GB2B1 @ v3bar)
-v14_B2 = sym.simplify(GB2B1 @ v4bar)
+    GB1B2 = InvSEn(GsB1) @ GsB2
+    GB2B1 = InvSEn(GB1B2)
 
-#size of blocks is the same, so posn of vertices v2n in B2 frame is same
-#as posn of v1n in B1 frame
-v21_B1 = sym.simplify(GB1B2 @ v1bar)
-v22_B1 = sym.simplify(GB1B2 @ v2bar)
-v23_B1 = sym.simplify(GB1B2 @ v3bar)
-v24_B1 = sym.simplify(GB1B2 @ v4bar)
+    vbar_list = [v1bar, v2bar, v3bar, v4bar]
+    g_list = [GB2B1, GB1B2]
 
-#find x and y components of posn
-v11x_B2, v11y_B2 = v11_B2
-v12x_B2, v12y_B2 = v12_B2
-v13x_B2, v13y_B2 = v13_B2
-v14x_B2, v14y_B2 = v14_B2
+    #do this algorithmically so we can wrap it in a tqdm; track progress
+    vertices_coords_list = []
+    print("Calculate_sym_vertices(): simplifying vertex coords.")
+    for i in tqdm(range(8)):
+        #G: 00001111, vbar: 01230123
+        vij_Bk = sym.simplify(g_list[i//4] @ vbar_list[i%4])
+        vertices_coords_list.append(vij_Bk)
 
-v21x_B1, v21y_B1 = v21_B1
-v22x_B1, v22y_B1 = v22_B1
-v23x_B1, v23y_B1 = v23_B1
-v24x_B1, v24y_B1 = v24_B1
-#---#
+    #save results
+    print('\nSaving results:')
+    filepath = '../data/vertices_coords_list.dill'
+    dill_dump(filepath, vertices_coords_list)
+    print(f"Vertices coords saved to {filepath}.")
 
-print("Sample expression of vertex x coordinate:")           
-display(v21x_B1)
 
-#substitute in values 
-v11x_B2_np = sym.lambdify(q, v11x_B2)
-v11y_B2_np = sym.lambdify(q, v11y_B2)
+def convert_coords_to_xy():
+    '''Take the symbolic coordinates we found for the two boxes and 
+    split them into x and y components.
+    '''
+    vertices_coords_list = dill_load('../data/vertices_coords_list.dill')
+    vertices_xy_list = []
+    for coord in vertices_coords_list:
+        coordx, coordy, _, _ = coord
+        vertices_xy_list.append([coordx, coordy])
 
-v12x_B2_np = sym.lambdify(q, v12x_B2)
-v12y_B2_np = sym.lambdify(q, v12y_B2)
+    #flatten
+    vertices_list_sym = np.array(vertices_xy_list).flatten().tolist()
+    return vertices_list_sym
 
-v13x_B2_np = sym.lambdify(q, v13x_B2)
-v13y_B2_np = sym.lambdify(q, v13y_B2)
+    ##subscripts: let v12 mean "the 2nd vertex of the 1st body"\
+    ##the home frame of v1n is in body 1; impact cond. requires posn in 2nd body frame
+    #v11_B2 = sym.simplify(GB2B1 @ v1bar)
+    #v12_B2 = sym.simplify(GB2B1 @ v2bar)
+    #v13_B2 = sym.simplify(GB2B1 @ v3bar)
+    #v14_B2 = sym.simplify(GB2B1 @ v4bar)
 
-v14x_B2_np = sym.lambdify(q, v14x_B2)
-v14y_B2_np = sym.lambdify(q, v14y_B2)
+    ##size of blocks is the same, so posn of vertices v2n in B2 frame is same
+    ##as posn of v1n in B1 frame
+    #v21_B1 = sym.simplify(GB1B2 @ v1bar)
+    #v22_B1 = sym.simplify(GB1B2 @ v2bar)
+    #v23_B1 = sym.simplify(GB1B2 @ v3bar)
+    #v24_B1 = sym.simplify(GB1B2 @ v4bar)
+
+    #find x and y components of posn
+    #v11x_B2, v11y_B2 = v11_B2
+    #v12x_B2, v12y_B2 = v12_B2
+    #v13x_B2, v13y_B2 = v13_B2
+    #v14x_B2, v14y_B2 = v14_B2
+
+    #v21x_B1, v21y_B1 = v21_B1
+    #v22x_B1, v22y_B1 = v22_B1
+    #v23x_B1, v23y_B1 = v23_B1
+    #v24x_B1, v24y_B1 = v24_B1
+    
+    ##------------------------#
+    #vertices_list_sym = [
+    #    v11x_B2, v11y_B2,
+    #    v12x_B2, v12y_B2,
+    #    v13x_B2, v13y_B2,
+    #    v14x_B2, v14y_B2,
+
+    #    v21x_B1, v21y_B1,
+    #    v22x_B1, v22y_B1,
+    #    v23x_B1, v23y_B1,
+    #    v24x_B1, v24y_B1        
+    #]
+
+    #return vertices_list_sym
 
 ###
 
-v21x_B1_np = sym.lambdify(q, v21x_B1)
-v21y_B1_np = sym.lambdify(q, v21y_B1)
+def calculate_sym_phiq():
+    '''
+    Calculate the symbolic impact equations Phi(q) for use in 
+    applying impact updates to the system. There will be 32 
+    phi(q) equations - 2 per possible vertex + side of impact
+    combination.
 
-v22x_B1_np = sym.lambdify(q, v22x_B1)
-v22y_B1_np = sym.lambdify(q, v22y_B1)
+    Saves symbolic phi(q) to a pickled file for loading
+    and use in other files, plus saving variables between sessions
+    of Python/Jupyter notebook.
 
-v23x_B1_np = sym.lambdify(q, v23x_B1)
-v23y_B1_np = sym.lambdify(q, v23y_B1)
+    Returns: None; load symbolic phi(q) from file for simplicity
+    '''
 
-v24x_B1_np = sym.lambdify(q, v24x_B1)
-v24y_B1_np = sym.lambdify(q, v24y_B1)
+    phiq_list = []
+    for vertex in vertices_list:
+        phiq_list.append() #see if we need to make an equality datatype
+                            #or if we can just do a-b
+
+    pass
 
 
-# In[17]:
+
+#things to only be calculated here
+if __name__ == '__main__':
 
 
-#define full set of impact conditions
-#wval = subs_dict[w]
+    print("Sample expression of vertex x coordinate:")           
+    display(v21x_B1)
+
+#---------global variables for use in other files-------------#
+
+#vertices_list_np = [sym.lambdify(q, expr) for expr in vertices_list]
+
+
+
+
+
+#OLD
+
+
+#v11x_B2_sym, v11y_B2_sym,\
+#v12x_B2_sym, v12y_B2_sym,\
+#v13x_B2_sym, v13y_B2_sym,\
+#v14x_B2_sym, v14y_B2_sym,\
+
+#v21x_B1_sym, v21y_B1_sym,\
+#v22x_B1_sym, v22y_B1_sym,\
+#v23x_B1_sym, v23y_B1_sym,\
+#v24x_B1_sym, v24y_B1_sym  = vertices_list
+
+##substitute in values 
+#v11x_B2_np = sym.lambdify(q, v11x_B2_sym)
+#v11y_B2_np = sym.lambdify(q, v11y_B2_sym)
+##
+#v12x_B2_np = sym.lambdify(q, v12x_B2_sym)
+#v12y_B2_np = sym.lambdify(q, v12y_B2_sym)
+##
+#v13x_B2_np = sym.lambdify(q, v13x_B2_sym)
+#v13y_B2_np = sym.lambdify(q, v13y_B2_sym)
+##
+#v14x_B2_np = sym.lambdify(q, v14x_B2_sym)
+#v14y_B2_np = sym.lambdify(q, v14y_B2_sym)
+
+
+#v21x_B1_np = sym.lambdify(q, v21x_B1_sym)
+#v21y_B1_np = sym.lambdify(q, v21y_B1_sym)
+##
+#v22x_B1_np = sym.lambdify(q, v22x_B1_sym)
+#v22y_B1_np = sym.lambdify(q, v22y_B1_sym)
+##
+#v23x_B1_np = sym.lambdify(q, v23x_B1_sym)
+#v23y_B1_np = sym.lambdify(q, v23y_B1_sym)
+##
+#v24x_B1_np = sym.lambdify(q, v24x_B1_sym)
+#v24y_B1_np = sym.lambdify(q, v24y_B1_sym)
