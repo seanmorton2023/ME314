@@ -212,6 +212,17 @@ def compute_EL_lhs(lagrangian, q):
     
     return LHS.T
 
+def format_solns(soln):
+    eqns_solved = []
+    #eqns_new = []
+
+    for i, sol in enumerate(soln):
+        for x in list(sol.keys()):
+            eqn_solved = sym.Eq(x, sol[x])
+            eqns_solved.append(eqn_solved)
+
+    return eqns_solved
+
 #-----------DILL FUNCTIONS-----------#
 
 
@@ -413,4 +424,8 @@ def TestSEn():
 
 
 if __name__ == '__main__':
-    dill_test(lagrangian)
+    #dill_test(lagrangian)
+    TestHat3()
+    TestMatrix4()
+    TestVb6()
+    TestSEn()

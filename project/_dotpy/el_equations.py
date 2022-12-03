@@ -1,14 +1,16 @@
+import numpy as np
+import sympy as sym
+import dill
+from tqdm import tqdm
 
-
+from geometry import *
+from helpers import *
 
 
 #define important positions      
 ym1 = ( GsB1    @ sym.Matrix([0, 0, 0, 1]) )[0]
 ym2 = ( GsB2    @ sym.Matrix([0, 0, 0, 1]) )[0]
 posn_top = Gsa @ sym.Matrix([0, 0, 0, 1])
-
-
-# In[101]:
 
 
 #define kinetic and potential energy
@@ -122,10 +124,6 @@ for a in sym.preorder_traversal(total_eq_simpl):
         
 display(total_eq_rounded)
 
-
-# In[114]:
-
-
 t0 = time.time()
 #soln = sym.solve(total_eq, qdd, dict = True, simplify = False, manual = True)
 #soln = sym.solve(total_eq, qdd, dict = True, manual = True)
@@ -134,38 +132,9 @@ soln = sym.solve(total_eq_rounded, qdd, dict = True, simplify = False)
 tf = time.time()
 print(f"Elapsed: {round(tf - t0, 2)} seconds")
 
-
-# In[116]:
-
-
-#print(soln)
-
-
-# In[117]:
-
-
-def format_solns(soln):
-    eqns_solved = []
-    #eqns_new = []
-
-    for i, sol in enumerate(soln):
-        for x in list(sol.keys()):
-            eqn_solved = sym.Eq(x, sol[x])
-            eqns_solved.append(eqn_solved)
-
-    return eqns_solved
-
-
-# In[118]:
-
-
 eqns_solved = format_solns(soln)
 for eq in eqns_solved:
     display(eq)
-
-
-# In[119]:
-
 
 #simplify equations one by one
 eqns_new = []
@@ -173,15 +142,8 @@ for eq in tqdm(eqns_solved):
     eq_new = sym.simplify(eq)
     eqns_new.append(eq_new)
 
-
-# In[120]:
-
-
 for eq in eqns_new:
     display(eq)
-
-
-# In[125]:
 
 
 #pickle the output of this constrained Euler-Lagrange derivation
@@ -189,14 +151,11 @@ temp = eqns_new
 pkl_filename = 'EL_simplified.dill'
 dill_dump(pkl_filename, temp)
 
-
-# In[6]:
-
-
 temp = 0
 display(temp)
 pkl_filename = 'EL_simplified.dill'
 temp = dill_load(pkl_filename)
+
 #show temp after we've loaded it
 for eq in temp:
     display(eq)

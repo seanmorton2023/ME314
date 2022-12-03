@@ -4,6 +4,9 @@ import dill
 import time
 from tqdm import tqdm
 
+from geometry import *
+from helpers import *
+
 def impact_condition(s):
     '''Contains and evaluates an array of impact conditions for the current
     system, at the current state s. 

@@ -4,6 +4,8 @@ import dill
 import time
 from tqdm import tqdm
 
+from helpers import *
+
 #define frames and symbols. let L1 = L2, m1 = m2 for computational efficiency
 #as this condition is unlikely to change
 L, w, m, g = sym.symbols(r'L, w, m, g')
@@ -80,8 +82,15 @@ GsB1 = Gse @ GeB1 #formerly Gsg
 #-------------------------------------#
 
 #geometry for plotting
+L_num = 1
+w_num = 1/3.0
 
-vertices_mat = w * np.array([
+win_height = 600
+win_width = 800
+pixels_to_unit = 100
+coordsys_len = 50
+
+vertices_mat = w_num * np.array([
     [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1],
     [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1],
     [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1],
@@ -91,5 +100,22 @@ vertices_mat = w * np.array([
 
 line_coords_mat = np.array([
     [0,  0, 0, 1],
-    [0, -L, 0, 1],
+    [0, -L_num, 0, 1],
 ]).T
+
+#have these variables in global namespace
+width  = win_width  // pixels_to_unit
+height = win_height // pixels_to_unit
+
+#let frame GUI be the coordinates as seen on the GUI,
+#frame r be the frame at GUI coords (0,0) with axes in same direction
+#as frame s
+GrGUI = np.array([
+    [width/win_width,    0, 0, 0],
+    [0, -height/win_height, 0, 0],
+    [0,                      0, 1, 0],
+    [0,                      0, 0, 1]
+]) 
+
+Grs = SOnAndRnToSEn(np.identity(3), [width/2, -height/2, 0])
+GsGUI = np.dot(InvSEn(Grs), GrGUI)

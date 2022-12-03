@@ -3,6 +3,9 @@ import tkinter as tk
 import time
 import numpy as np
 
+from helpers import *
+from geometry import *
+
 def make_oval(canvas: tk.Canvas, center: tuple, width: int, height: int, fill: str='hotpink'):
     top_left = (center[0] - width, center[1] - height)
     bottom_right = (center[0] + width, center[1] + height)
