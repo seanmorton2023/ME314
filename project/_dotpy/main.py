@@ -31,8 +31,8 @@ q_array_test = np.array([
     -2 * np.pi * t_array
 ]).T
 
-q_array = q_array_test[:]
-#q_array = pd.read_csv('../data/q_array.csv', header=None).to_numpy()
+#q_array = q_array_test[:]
+q_array = pd.read_csv('../data/q_array.csv', header=None).to_numpy()
 
 #----------------initialize GUI----------------------#
 gui = GUI(win_height, win_width) #namespace for variables: geometry.py

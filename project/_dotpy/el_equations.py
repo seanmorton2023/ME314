@@ -1,11 +1,15 @@
 import numpy as np
 import sympy as sym
+import pandas as pd
+import matplotlib.pyplot as plt
+
 import dill
 from tqdm import tqdm
 
 from geometry import *
 from helpers import *
 
+#from IPython.core.display import display
 
 def rk4(dxdt, x, t, dt):
     '''
@@ -95,13 +99,13 @@ def compute_solve_EL(F_mat):
     RHS = sym.zeros(len(lhs), 1)
     RHS = RHS + F_mat
 
-    #do symbolic substitutions before solving to speed up computation
-    print("\nPress any key to simplify the E-L equations.", end='')
-    input()
-    print("Simplifying:")
-
     lhs = lhs.subs(subs_dict) #defined in geometry.py
     total_eq = sym.Eq(lhs, RHS)
+
+    #do symbolic substitutions before solving to speed up computation
+    print("\nPress any key to simplify the E-L equations. ", end='')
+    input()
+    print("Simplifying:")
 
     #waited on all simplify() calls until here
     t0 = time.time()
@@ -116,7 +120,12 @@ def compute_solve_EL(F_mat):
         if isinstance(a, sym.Float):
             total_eq_rounded = total_eq_rounded.subs(a, round(a, 8))
         
-    print("\nPress any key to solve the E-L equations.", end='')
+    print("Euler-Lagrange equations - simplified:")
+    #display(total_eq_simpl)
+    print("Euler-Lagrange equations - rounded:")
+    #display(total_eq_rounded)
+
+    print("\nPress any key to solve the E-L equations. ", end='')
     input()
     print("Solving:")
 
@@ -191,7 +200,8 @@ def construct_dxdt(eqns_new, q_ext):
 
 def dxdt(t,s):
     F_x      = 0 
-    F_y      = 0
+    #F_y      = 0
+    F_y = 19.62
     F_theta1 = 0
     F_theta2 = 0
     F_phi1   = 0
@@ -215,7 +225,7 @@ def dxdt(t,s):
 
 ###
 
-def full_simulation():
+def full_simulation(ICs):
     '''
     Carries out the simulate() function and saves results
     to a file. Encapsulating it in a file to get it out of
@@ -226,18 +236,8 @@ def full_simulation():
     #print(eqns_new)
 
     q_ext = sym.Matrix([q, q.diff(t), F_mat])
-    xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
-        = construct_dxdt(eqns_new, q_ext)
 
     #simulate the system with no impacts applied
-    t_span = [0, 10]
-    dt = 0.01
-    theta0 = np.pi/4
-    phi0 = np.pi/3
-    init_posns = [1, 1, theta0, -theta0, phi0, -phi0]
-    init_velocities = [0, 0, 0, 0, 0, 0]
-    ICs = init_posns + init_velocities
-
     q_array = simulate(dxdt, ICs, t_span, dt, rk4)
     q_array = q_array.T
 
@@ -248,27 +248,27 @@ def full_simulation():
 ###
 
 def ham_f():
-    '''
+    '''Generate the Hamiltonian function for this system.
+    Only needs to be done once, not recalculated at every entry in
+    the state array.
     '''
     #inertial properties defined in geometry.py
     KE_B1 = 0.5 * (VbB1.T @ inertia_B1 @ VbB1)[0]
     KE_B2 = 0.5 * (VbB2.T @ inertia_B2 @ VbB2)[0]
     U = m*g*(ym1 + ym2)
     ham_sym = KE_B1 + KE_B2 + U
-    ham_sym = ham_sym.simplify()
 
+    #sub in parameters from geometry.py
+    print("Simplifying Hamiltonian...")
+    ham_sym = ham_sym.simplify()
+    ham_sym = ham_sym.subs(subs_dict)
+
+    print("\nWriting to file:")
     ham_file = '../data/hamiltonian.dill'
     dill_dump(ham_file, ham_sym)
-    #
-
-def ham(s):
-    '''Calculates the Hamiltonian of the system at one
-    state. This function can be applied over the entire 
-    trajectory array to determine how the Hamiltonian is changing
-    over time.
-    '''
-    pass
-
+    print(f"Wrote Hamiltonian to {ham_file}.")
+    return ham_sym
+    
 
 if __name__ == '__main__':
 
@@ -281,6 +281,11 @@ if __name__ == '__main__':
         sym.symbols(r'F_\phi2'),
     ])
 
+    eqns_new = dill_load('../data/EL_simplified.dill')
+    q_ext = sym.Matrix([q, q.diff(t), F_mat])
+    xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
+        = construct_dxdt(eqns_new, q_ext)
+
     ##for Lagrangian debug - save and then load into Jupyter NB
     #lagrangian = compute_lagrangian()
     #lagrangian_filename = '../data/lagrangian.dill'
@@ -292,6 +297,42 @@ if __name__ == '__main__':
     #pkl_filename = '../data/EL_simplified.dill'
     #dill_dump(pkl_filename, temp) 
 
+    t_span = [0, 10]
+    dt = 0.01
+
+    theta0 = np.pi/4
+    phi0 = np.pi/3
+    init_posns = [1, 1, theta0, -theta0, phi0, -phi0]
+    init_velocities = [0, 0, 0, 0, 0, 0]
+    ICs = init_posns + init_velocities
+    full_simulation(ICs) #saves results to q array
+
     #plot Hamiltonian array over time
-    s_test = np.zeros((12,1))
-    ham(s_test)
+    q_array = pd.read_csv('../data/q_array.csv', header=None).to_numpy()
+    ham_sym = dill_load('../data/hamiltonian.dill')
+    q_noforces = sym.Matrix([q, q.diff(t)])
+    ham_np = sym.lambdify(q_noforces, ham_sym)
+    ham_array = [ham_np(*s) for s in q_array]
+
+    plt.figure(1)
+    plt.plot(ham_array)
+    plt.xlabel("Index")
+    plt.ylabel("Hamiltonian value (J)")
+    plt.title("Hamiltonian for current simulation")
+
+    #plot trajectory over time
+    plt.figure(2)
+    plot_array = q_array.T
+    t_array = np.linspace(t_span[0],t_span[1],len(plot_array[0]))
+    legend = ['x','y','theta1','theta2','phi1','phi2']
+
+    for i in range(6):
+        state = plot_array[i]
+        plt.plot(t_array, state, label=legend[i])
+        
+    plt.xlabel("Index")
+    plt.ylabel("State variable value")
+    plt.title("Trajectory for current simulation")
+    plt.legend()
+    plt.show()
+

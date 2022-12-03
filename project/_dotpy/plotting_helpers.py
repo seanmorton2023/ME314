@@ -24,10 +24,10 @@ def make_grid_label(canvas, x, y, w, h, offset, pixels_to_unit):
     origin_x = width_world//2
     origin_y = height_world//2
         
-    xlabel, ylabel = (x/pixels_to_unit - origin_x, (height_world-y)/pixels_to_unit - origin_y)
+    xlabel, ylabel = (x/pixels_to_unit - origin_x, (h-y)/pixels_to_unit - origin_y - 0.5)
 
     #decide whether label is for x or y
-    coord = xlabel if not x== -origin_x else ylabel
+    coord = xlabel if not xlabel == -origin_x else ylabel
     
     canvas.create_oval(
         x - offset, 
