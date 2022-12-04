@@ -214,7 +214,8 @@ def gen_sym_subs(q, qd_q):
     sym_qd = [sym.symbols(f"qd_{i+1}") for i in range(len(q))]
     sym_q = sym_qd + sym_q_only
 
-    # - Define substitution dicts for q at tau+ and q at tau-,
+    # - Define substitution dicts for q at tau+ and q at tau-. We may need
+    #the list form as well for later substitutions, so return that as well.
     q_taum_list   = [sym.symbols(f"q_{i+1}")    for i in range(len(q))]
     qd_taum_list  = [sym.symbols(f"qd_{i+1}^-") for i in range(len(q))]
     qd_taup_list  = [sym.symbols(f"qd_{i+1}^+") for i in range(len(q))]
@@ -259,6 +260,47 @@ def impact_symbolic_eqs(phi, lagrangian, q, q_subs):
     
     return [expr_a, expr_b, expr_c]
 
+def gen_sinusoid_subs(expr_matrix):
+    '''Takes a matrix of expressions, and return a set of all sinusoidal terms
+    contained within that matrix.
+
+    Motivation: one good candidate for solving the impact equations is sympy.nonlinsolve(),
+        which cannot take in sinusoidal terms - it can only 
+
+
+    '''
+    factors_list = np.array([])
+    #generally I should avoid nested for loops but this is a small # of computations
+    for row in eqns_matrix:
+        for factor in row.as_ordered_terms():
+            factors_list = np.append(factors_list, list(factor.as_coeff_mul()[-1]) )
+
+    factors_dict = {}
+    for factor in factors_list:
+        if factor in factors_dict.keys():
+            factors_dict[factor] += 1
+        else:
+            factors_dict[factor] = 1
+
+    #make a loop structure for creating the simplest set of factors
+    factors_list = np.array(list(factors_dict.keys()))
+    condition = np.any([x.is_Mul or x.is_Add or x.is_Pow for x in factors_list])
+
+    while condition:
+        factors_dict = decompose_factors_dict(factors_dict) #from helpers.py
+        factors_list = np.array(list(factors_dict.keys()))
+        condition = np.any([x.is_Mul or x.is_Add or x.is_Pow for x in factors_list])
+    
+    #get list of sin() and cos() terms
+    sinusoids = [f for f in factors_list if (type(f) == sym.cos or type(f) == sym.sin)]
+
+    #make symbolic substitutions for sinusoids in the impact equations - this 
+    #will make the impact equations into polynomials, solvable by nonlinsolve()
+    sinusoid_subs = {sinusoids[i] : sym.symbols(f"c_{i+1}") for i in range(len(sinusoids))}
+    sinusoid_subs_inv = {val : key for key, val in sinusoid_subs.items()}
+
+    return sinusoid_subs, sinusoid_subs_inv
+
 def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
     '''Methodically calculate all the possible impact updates 
     for the two boxes, using the impact equations derived in class.
@@ -277,7 +319,7 @@ def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
 
     #substitution dictionaries and lists for use in calculating impact
     #update equations
-    q_state_dict, q_taum_dict, q_taup_dict, \
+    q_state_dict, qd_taum_dict, qd_taup_dict, \
         q_taum_list, qd_taum_list, qd_taup_list = gen_sym_subs(q, qd_q)
 
     #for phi in phiq_list_sym:
@@ -289,13 +331,13 @@ def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
     lamb_dphi_dq = lamb * dphi_dq
 
     dL_dqdot_eqn = \
-        dL_dqd.subs(q_taup_dict) \
-        - dL_dqd.subs(q_taum_dict) \
+        dL_dqd.subs(qd_taup_dict) \
+        - dL_dqd.subs(qd_taum_dict) \
         - lamb_dphi_dq
 
     hamiltonian_eqn = \
-        hamiltonian_term.subs(q_taup_dict) \
-        - hamiltonian_term.subs(q_taum_dict) \
+        hamiltonian_term.subs(qd_taup_dict) \
+        - hamiltonian_term.subs(qd_taum_dict) \
     
     #sub in m, g, L, w
     dL_dqdot_eqn    = dL_dqdot_eqn.subs(   const_subs)
@@ -350,13 +392,28 @@ if __name__ == '__main__':
     #---------global variables for use in other files-------------#
 
     #calculate_sym_vertices()
+    '''
     print("Preparing Lagrangian and impact constraints...")
     xy_coords_list = convert_coords_to_xy()
     vertices_list_np = [sym.lambdify(q, expr) for expr in xy_coords_list]
     phiq_list_sym = calculate_sym_phiq(xy_coords_list)
     lagrangian = compute_lagrangian()
 
-    gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
+    #gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
+    '''
+
+    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
+    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
+
+    #set up equations to be solved
+    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
+    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
+
+    
+
+
+
+
 
     #display these on Jupyter notebook, so we need to save them to file
     #dill_dump('../dill/phiq_list.dill', phiq_list_sym)

@@ -182,7 +182,7 @@ def CalculateVb6(G,t):
         
     return UnhatMatrix4(V_hat)
 
-#-----------EULER-LAGRANGE -----------#
+#-----------EULER-LAGRANGE AND IMPACTS-----------#
 
 def compute_EL_lhs(lagrangian, q, t):
     '''
@@ -224,6 +224,40 @@ def format_solns(soln):
             eqns_solved.append(eqn_solved)
 
     return eqns_solved
+
+def decompose_factors_dict(factors_dict):
+    '''Take the dictionary of factors in the impact equations, and breaks
+    them down further. This process can be repeated to get the factors only
+    in terms of sines, cosines, numbers, and symbolic variables.
+    
+    Returns: new_factors_dict. Contains the same data as factors_dict
+        in smaller terms.
+    '''
+    new_factors_array = np.array([])
+    new_factors_dict = factors_dict.copy()
+
+    for factor in factors_dict.keys():
+        if factor.is_Add:
+            #add components to list of factors and remove from old dictionary
+            new_factors_array = np.append(new_factors_array, factor.as_ordered_terms())
+            del new_factors_dict[factor]
+
+        if factor.is_Pow:        
+            new_factors_array = np.append(new_factors_array, list(factor.as_powers_dict().keys()))
+            del new_factors_dict[factor]
+
+        if factor.is_Mul:
+            new_factors_array = np.append(new_factors_array, list(factor.as_coeff_mul()[-1]) )
+            del new_factors_dict[factor]
+
+    #fdo data checking and add terms back into the dictionary
+    for factor in new_factors_array:
+        if factor in new_factors_dict.keys():
+            new_factors_dict[factor] += 1
+        else:
+            new_factors_dict[factor] = 1
+            
+    return new_factors_dict
 
 #-----------DATA SAVING FUNCTIONS-----------#
 
