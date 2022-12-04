@@ -231,7 +231,7 @@ def full_simulation(ICs):
     to a file. Encapsulating it in a file to get it out of
     my main() function.
     '''
-    pkl_filename = '../data/EL_simplified.dill'
+    pkl_filename = '../dill/EL_simplified.dill'
     eqns_new = dill_load(pkl_filename)
     #print(eqns_new)
 
@@ -242,7 +242,7 @@ def full_simulation(ICs):
     q_array = q_array.T
 
     #save q_array so we can animate it
-    filename = '../data/q_array.csv'
+    filename = '../csv/q_array.csv'
     write_csv_mat(filename, q_array) #from helpers.py
 
 ###
@@ -264,7 +264,7 @@ def ham_f():
     ham_sym = ham_sym.subs(subs_dict)
 
     print("\nWriting to file:")
-    ham_file = '../data/hamiltonian.dill'
+    ham_file = '../dill/hamiltonian.dill'
     dill_dump(ham_file, ham_sym)
     print(f"Wrote Hamiltonian to {ham_file}.")
     return ham_sym
@@ -281,20 +281,20 @@ if __name__ == '__main__':
         sym.symbols(r'F_\phi2'),
     ])
 
-    eqns_new = dill_load('../data/EL_simplified.dill')
+    eqns_new = dill_load('../dill/EL_simplified.dill')
     q_ext = sym.Matrix([q, q.diff(t), F_mat])
     xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
         = construct_dxdt(eqns_new, q_ext)
 
     ##for Lagrangian debug - save and then load into Jupyter NB
     #lagrangian = compute_lagrangian()
-    #lagrangian_filename = '../data/lagrangian.dill'
+    #lagrangian_filename = '../dill/lagrangian.dill'
     #dill_dump(lagrangian_filename, lagrangian)
 
     # save output of Euler-Lagrange equations for later use/reuse
     #eqns_new = compute_solve_EL(F_mat)
     #temp = eqns_new
-    #pkl_filename = '../data/EL_simplified.dill'
+    #pkl_filename = '../dill/EL_simplified.dill'
     #dill_dump(pkl_filename, temp) 
 
     t_span = [0, 10]
@@ -308,8 +308,8 @@ if __name__ == '__main__':
     full_simulation(ICs) #saves results to q array
 
     #plot Hamiltonian array over time
-    q_array = pd.read_csv('../data/q_array.csv', header=None).to_numpy()
-    ham_sym = dill_load('../data/hamiltonian.dill')
+    q_array = pd.read_csv('../csv/q_array.csv', header=None).to_numpy()
+    ham_sym = dill_load('../dill/hamiltonian.dill')
     q_noforces = sym.Matrix([q, q.diff(t)])
     ham_np = sym.lambdify(q_noforces, ham_sym)
     ham_array = [ham_np(*s) for s in q_array]

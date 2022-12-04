@@ -2,10 +2,93 @@ import numpy as np
 import sympy as sym
 import dill
 import time
+from datetime import datetime
 from tqdm import tqdm
 
 from geometry import *
 from helpers import *
+from el_equations import compute_lagrangian
+
+def calculate_sym_vertices():
+    '''
+    Calculates 16 symbolic expressions to describe the vertices of the
+    2 boxes in the system - 4 vertices * 2 coords(x,y) * 2 boxes.
+    
+    This is a moderately time-consuming operation (3min) so the output
+    will be saved to a file to prevent losing data.
+
+    Returns: 16 symbolic expressions for vijn_Bk, where i = 1-2 (box#), 
+    j = 1-4 (vertex#), k = 2-1 (opposite of i #)
+    '''
+
+    #define positions of vertices in boxes' home frames
+    v1bar = w*sym.Matrix([ 1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
+    v2bar = w*sym.Matrix([-1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
+    v3bar = w*sym.Matrix([-1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
+    v4bar = w*sym.Matrix([ 1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
+
+    #from geometry.py
+    GB1B2 = InvSEn(GsB1) @ GsB2
+    GB2B1 = InvSEn(GB1B2)
+
+    vbar_list = [v1bar, v2bar, v3bar, v4bar]
+    g_list = [GB2B1, GB1B2]
+
+    #do this algorithmically so we can wrap it in a tqdm; track progress
+    vertices_coords_list = []
+    print("Calculate_sym_vertices(): simplifying vertex coords.")
+    for i in tqdm(range(8)):
+        #G: 00001111, vbar: 01230123
+        vij_Bk = sym.simplify(g_list[i//4] @ vbar_list[i%4])
+        vertices_coords_list.append(vij_Bk)
+
+    #save results
+    print('\nSaving results:')
+    filepath = '../dill/vertices_coords_list.dill'
+    dill_dump(filepath, vertices_coords_list)
+    print(f"Vertices coords saved to {filepath}.")
+
+def convert_coords_to_xy():
+    '''Take the symbolic coordinates we found for the two boxes and 
+    split them into x and y components.
+    '''
+    vertices_coords_list = dill_load('../dill/vertices_coords_list.dill')
+    vertices_xy_list = []
+    for coord in vertices_coords_list:
+        coordx, coordy, _, _ = coord
+        vertices_xy_list.append([coordx, coordy])
+        pass
+
+    #flatten
+    vertices_list_sym = np.array(vertices_xy_list).flatten().tolist()
+    return vertices_list_sym
+
+def calculate_sym_phiq(vlist):
+    '''
+    Calculate the symbolic impact equations Phi(q) for use in 
+    applying impact updates to the system. There will be 32 
+    phi(q) equations - 2 per possible vertex + side of impact
+    combination.
+
+    Saves symbolic phi(q) to a pickled file for loading
+    and use in other files, plus saving variables between sessions
+    of Python/Jupyter notebook.
+
+    Arguments:
+    vlist - a list of symbolic vertex coordinates broken apart 
+        into x and y
+
+    Returns: None; load symbolic phi(q) from file for simplicity
+    '''
+
+    phiq_list = []
+    for vertex in vlist:
+        phiq_list.append(vertex + w/2) #impact from left side
+        phiq_list.append(vertex - w/2) #impact from right side
+
+    #substitute in values of L and w
+    phiq_list = [expr.subs(subs_dict) for expr in phiq_list]
+    return phiq_list
 
 def impact_condition(s):
     '''Contains and evaluates an array of impact conditions for the current
@@ -54,23 +137,12 @@ def phi_nearzero(s, atol):
     Returns:
     - a list of indices of phi that are near zero at the given time.
     '''
-    f_list = np.array([
-        v11x_B2_np, v11y_B2_np,
-        v12x_B2_np, v12y_B2_np,
-        v13x_B2_np, v13y_B2_np,
-        v14x_B2_np, v14y_B2_np,
 
-        v21x_B1_np, v21y_B1_np,
-        v22x_B1_np, v22y_B1_np,
-        v23x_B1_np, v23y_B1_np,
-        v24x_B1_np, v24y_B1_np,
-    ])
-    
     #apply upper and lower bound condition to all vertices, in x and y directions
     phi_arr_np = np.array([])
-    for i in np.arange(0, len(f_list)):
-        phi_arr_np = np.append(phi_arr_np, f_list[i](s) + wval/2.0)
-        phi_arr_np = np.append(phi_arr_np, f_list[i](s) - wval/2.0)
+    for i in np.arange(0, len(vertices_list_np)):
+        phi_arr_np = np.append(phi_arr_np, vertices_list_np[i](s) + w_num/2.0)
+        phi_arr_np = np.append(phi_arr_np, vertices_list_np[i](s) - w_num/2.0)
 
     #we're interested in which of the phi conditions were evaluated at close to 0, so return the
     #list of indices close to 0
@@ -112,174 +184,183 @@ def filter_phiq(impact_indices, phi_indices):
     return valid_phiq                 #returns the phi(q) equations that both evaluate to ~0 and
                                        #are related to an impact condition that has been met
 
-def calculate_sym_vertices():
+def gen_sym_subs(q, qd_q):
     '''
-    Calculates 16 symbolic expressions to describe the vertices of the
-    2 boxes in the system - 4 vertices * 2 coords(x,y) * 2 boxes.
+    Makes three sets of symbolic variables for use in the impact equations.
+    Inputs:
+    - q: our state vector. ex: [theta1 theta2 theta3]
+    - qd_q: our state vector, plus velocities. must have velocities first.
+        ex: [theta1d theta2d theta3d theta1 theta2 theta3]
     
-    This is a moderately time-consuming operation (3min) so the output
-    will be saved to a file to prevent losing data.
-
-    Returns: 16 symbolic expressions for vijn_Bk, where i = 1-2 (box#), 
-    j = 1-4 (vertex#), k = 2-1 (opposite of i #)
+    Returns:
+    - q_subs: a dictionary of state variables and their "q_1" and "qd_1"
+        representations for use in calculation of the impact symbolic equations
+    - q_taup_subs: a dictionary that can replace "q_1" and "qd_1" with 
+        "q_1^{tau+}" and "qd_1^{tau+}" for solving for the impact update
+    - q_taum_subs: ^same as above, but for tau-minus   
     '''
 
-    #define positions of vertices in boxes' home frames
-    v1bar = w*sym.Matrix([ 1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
-    v2bar = w*sym.Matrix([-1/sym.sqrt(2),  1/sym.sqrt(2), 0, 1])
-    v3bar = w*sym.Matrix([-1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
-    v4bar = w*sym.Matrix([ 1/sym.sqrt(2), -1/sym.sqrt(2), 0, 1])
+    #enforce that qd_q, which might get confused for q_ext, has derivatives first
+    #and other state variables second
+    qd_q = sym.Matrix(qd_q).reshape(1, len(qd_q)).tolist()[0]
+    for i in range(len(qd_q)-1):
+        curr = qd_q[i]
+        next = qd_q[i+1]
+        if not curr.is_Derivative and next.is_Derivative:
+            raise Exception("Gen_sym_subs(): qd_q must have derivatives first")
 
-    GB1B2 = InvSEn(GsB1) @ GsB2
-    GB2B1 = InvSEn(GB1B2)
+    #create symbolic substitutions for each element in state array
+    sym_q_only = [sym.symbols(f"q_{i+1}") for i in range(len(q))]
+    sym_qd = [sym.symbols(f"qd_{i+1}") for i in range(len(q))]
+    sym_q = sym_qd + sym_q_only
 
-    vbar_list = [v1bar, v2bar, v3bar, v4bar]
-    g_list = [GB2B1, GB1B2]
+    # - Define substitution dicts for q at tau+ and q at tau-,
+    q_taum_list   = [sym.symbols(f"q_{i+1}")    for i in range(len(q))]
+    qd_taum_list  = [sym.symbols(f"qd_{i+1}^-") for i in range(len(q))]
+    qd_taup_list  = [sym.symbols(f"qd_{i+1}^+") for i in range(len(q))]
 
-    #do this algorithmically so we can wrap it in a tqdm; track progress
-    vertices_coords_list = []
-    print("Calculate_sym_vertices(): simplifying vertex coords.")
-    for i in tqdm(range(8)):
-        #G: 00001111, vbar: 01230123
-        vij_Bk = sym.simplify(g_list[i//4] @ vbar_list[i%4])
-        vertices_coords_list.append(vij_Bk)
+    q_state_dict  = {qd_q[i]: sym_q[i]          for i in range(len(qd_q))}
+    qd_taum_dict  = {sym_q[i] : qd_taum_list[i] for i in range(len(q))}
+    qd_taup_dict  = {sym_q[i] : qd_taup_list[i] for i in range(len(q))}
 
-    #save results
-    print('\nSaving results:')
-    filepath = '../data/vertices_coords_list.dill'
-    dill_dump(filepath, vertices_coords_list)
-    print(f"Vertices coords saved to {filepath}.")
+    return q_state_dict, qd_taum_dict, qd_taup_dict, \
+            q_taum_list, qd_taum_list, qd_taup_list
 
+def impact_symbolic_eqs(phi, lagrangian, q, q_subs):
+    '''Takes the impact condition phi, Lagrangian L, and state vector
+    q, and returns the expressions we use to evaluate for impact.
 
-def convert_coords_to_xy():
-    '''Take the symbolic coordinates we found for the two boxes and 
-    split them into x and y components.
+    Returns, in order: dL_dqdot, dphi_dq, (dL_dqdot * qdot) - L(q,qdot), 
     '''
-    vertices_coords_list = dill_load('../data/vertices_coords_list.dill')
-    vertices_xy_list = []
-    for coord in vertices_coords_list:
-        coordx, coordy, _, _ = coord
-        vertices_xy_list.append([coordx, coordy])
-
-    #flatten
-    vertices_list_sym = np.array(vertices_xy_list).flatten().tolist()
-    return vertices_list_sym
-
-    ##subscripts: let v12 mean "the 2nd vertex of the 1st body"\
-    ##the home frame of v1n is in body 1; impact cond. requires posn in 2nd body frame
-    #v11_B2 = sym.simplify(GB2B1 @ v1bar)
-    #v12_B2 = sym.simplify(GB2B1 @ v2bar)
-    #v13_B2 = sym.simplify(GB2B1 @ v3bar)
-    #v14_B2 = sym.simplify(GB2B1 @ v4bar)
-
-    ##size of blocks is the same, so posn of vertices v2n in B2 frame is same
-    ##as posn of v1n in B1 frame
-    #v21_B1 = sym.simplify(GB1B2 @ v1bar)
-    #v22_B1 = sym.simplify(GB1B2 @ v2bar)
-    #v23_B1 = sym.simplify(GB1B2 @ v3bar)
-    #v24_B1 = sym.simplify(GB1B2 @ v4bar)
-
-    #find x and y components of posn
-    #v11x_B2, v11y_B2 = v11_B2
-    #v12x_B2, v12y_B2 = v12_B2
-    #v13x_B2, v13y_B2 = v13_B2
-    #v14x_B2, v14y_B2 = v14_B2
-
-    #v21x_B1, v21y_B1 = v21_B1
-    #v22x_B1, v22y_B1 = v22_B1
-    #v23x_B1, v23y_B1 = v23_B1
-    #v24x_B1, v24y_B1 = v24_B1
+    qd = q.diff(t)
     
-    ##------------------------#
-    #vertices_list_sym = [
-    #    v11x_B2, v11y_B2,
-    #    v12x_B2, v12y_B2,
-    #    v13x_B2, v13y_B2,
-    #    v14x_B2, v14y_B2,
-
-    #    v21x_B1, v21y_B1,
-    #    v22x_B1, v22y_B1,
-    #    v23x_B1, v23y_B1,
-    #    v24x_B1, v24y_B1        
-    #]
-
-    #return vertices_list_sym
-
-###
-
-def calculate_sym_phiq():
+    #define dL_dqdot before substitution
+    L_mat = sym.Matrix([lagrangian])
+    dL_dqd = L_mat.jacobian(qd)
+    
+    #define dPhi/dq before substitution
+    phi_mat = sym.Matrix([phi])
+    dphi_dq = phi_mat.jacobian(q)
+    
+    #define third expression
+    dL_dqd_dot_qd = dL_dqd.dot(qd)
+    expr3 = dL_dqd_dot_qd - lagrangian
+    
     '''
-    Calculate the symbolic impact equations Phi(q) for use in 
-    applying impact updates to the system. There will be 32 
-    phi(q) equations - 2 per possible vertex + side of impact
-    combination.
+    at this point the equations are in terms of the
+    state variables, x,y, theta1, ...
 
-    Saves symbolic phi(q) to a pickled file for loading
-    and use in other files, plus saving variables between sessions
-    of Python/Jupyter notebook.
+    convert them into simplified versions "q1, q2, q3, ..."
+    for ease of computing the difference between q_tau+ and q_tau- 
+    '''
+    expr_a = dL_dqd.subs(q_subs)
+    expr_b = dphi_dq.subs(q_subs)
+    expr_c = expr3.subs(q_subs)
+    
+    return [expr_a, expr_b, expr_c]
 
-    Returns: None; load symbolic phi(q) from file for simplicity
+def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
+    '''Methodically calculate all the possible impact updates 
+    for the two boxes, using the impact equations derived in class.
+
+    Arguments:
+    - phiq_list: 32x0 list of symbolic equations for possible impacts
+    - lagrangian: symbolic Lagrangian
+    - q: state vector, 6x1 Sympy Matrix
+    - const_subs: dictionary of substitutions for m, g, L, w
+    '''
+    lamb = sym.symbols(r'\lambda')
+
+    #qd_q is similar to q_ext, only derivatives come first so that 
+    #substitution works properly
+    qd_q = sym.Matrix([sym.Matrix(q.diff(t)), q])
+
+    #substitution dictionaries and lists for use in calculating impact
+    #update equations
+    q_state_dict, q_taum_dict, q_taup_dict, \
+        q_taum_list, qd_taum_list, qd_taup_list = gen_sym_subs(q, qd_q)
+
+    #for phi in phiq_list_sym:
+    sample_phi = phiq_list_sym[0]
+    dL_dqd, dphi_dq, hamiltonian_term = \
+            impact_symbolic_eqs(sample_phi,lagrangian, q, q_state_dict)
+
+    '''
+    lamb_dphi_dq = lamb * dphi_dq
+
+    dL_dqdot_eqn = \
+        dL_dqd.subs(q_taup_dict) \
+        - dL_dqd.subs(q_taum_dict) \
+        - lamb_dphi_dq
+
+    hamiltonian_eqn = \
+        hamiltonian_term.subs(q_taup_dict) \
+        - hamiltonian_term.subs(q_taum_dict) \
+    
+    #sub in m, g, L, w
+    dL_dqdot_eqn    = dL_dqdot_eqn.subs(   const_subs)
+    hamiltonian_eqn = hamiltonian_eqn.subs(const_subs)
+
+    #hamiltonian_eqn = hamiltonian_eqn.simplify()
     '''
 
-    phiq_list = []
-    for vertex in vertices_list:
-        phiq_list.append() #see if we need to make an equality datatype
-                            #or if we can just do a-b
+    '''
+    #these need to be simplified or else they're uninterpretable
+    print(f"Simplifying impact equations. Started at: {datetime.now()}")
+    t0 = time.time()
+    dL_dqdot_eqn = sym.simplify(dL_dqdot_eqn)
+    hamiltonian_eqn = sym.simplify(hamiltonian_eqn)
+    dL_dqdot_eqn = dL_dqdot_eqn.T
+    tf = time.time()
+
+    print(f"\nImpacts simplify: \nElapsed: {round(tf - t0, 2)} seconds")
+
+    #save results for the first round of this to a file so 
+    #we don't have to worry about saving + reloading
+    dill_dump('../dill/impacts_hamiltonian_v1.dill', hamiltonian_eqn)
+    dill_dump('../dill/impacts_dL_dqdot_eq_v1.dill', dL_dqdot_eqn)
+    '''
+
+    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
+    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
+
+    #set up equations to be solved
+    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
+    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
+    
+    #solve for the values of qdot and lambda
+    sol_vars = qd_taup_list
+    sol_vars.append(lamb)
+
+    print(f"Solving impact equations. Started at: {datetime.now()}")
+    t0 = time.time()
+    solns = sym.solve(eqns_matrix, sol_vars, dict = True, simplify = False, manual=True)
+    tf = time.time()
+
+    print(f"\nImpacts solve: \nElapsed: {round(tf - t0, 2)} seconds")
+    print(solns)
+    dill_dump('../dill/impacts_solns_v1.dill', solns)
+
 
     pass
-
-
 
 #things to only be calculated here
 if __name__ == '__main__':
 
+    #---------global variables for use in other files-------------#
 
-    print("Sample expression of vertex x coordinate:")           
-    display(v21x_B1)
+    #calculate_sym_vertices()
+    print("Preparing Lagrangian and impact constraints...")
+    xy_coords_list = convert_coords_to_xy()
+    vertices_list_np = [sym.lambdify(q, expr) for expr in xy_coords_list]
+    phiq_list_sym = calculate_sym_phiq(xy_coords_list)
+    lagrangian = compute_lagrangian()
 
-#---------global variables for use in other files-------------#
+    gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
 
-#vertices_list_np = [sym.lambdify(q, expr) for expr in vertices_list]
+    #display these on Jupyter notebook, so we need to save them to file
+    #dill_dump('../dill/phiq_list.dill', phiq_list_sym)
 
+    #print("Sample expression of vertex x coordinate:")           
+    #display(v21x_B1)
 
-
-
-
-#OLD
-
-
-#v11x_B2_sym, v11y_B2_sym,\
-#v12x_B2_sym, v12y_B2_sym,\
-#v13x_B2_sym, v13y_B2_sym,\
-#v14x_B2_sym, v14y_B2_sym,\
-
-#v21x_B1_sym, v21y_B1_sym,\
-#v22x_B1_sym, v22y_B1_sym,\
-#v23x_B1_sym, v23y_B1_sym,\
-#v24x_B1_sym, v24y_B1_sym  = vertices_list
-
-##substitute in values 
-#v11x_B2_np = sym.lambdify(q, v11x_B2_sym)
-#v11y_B2_np = sym.lambdify(q, v11y_B2_sym)
-##
-#v12x_B2_np = sym.lambdify(q, v12x_B2_sym)
-#v12y_B2_np = sym.lambdify(q, v12y_B2_sym)
-##
-#v13x_B2_np = sym.lambdify(q, v13x_B2_sym)
-#v13y_B2_np = sym.lambdify(q, v13y_B2_sym)
-##
-#v14x_B2_np = sym.lambdify(q, v14x_B2_sym)
-#v14y_B2_np = sym.lambdify(q, v14y_B2_sym)
-
-
-#v21x_B1_np = sym.lambdify(q, v21x_B1_sym)
-#v21y_B1_np = sym.lambdify(q, v21y_B1_sym)
-##
-#v22x_B1_np = sym.lambdify(q, v22x_B1_sym)
-#v22y_B1_np = sym.lambdify(q, v22y_B1_sym)
-##
-#v23x_B1_np = sym.lambdify(q, v23x_B1_sym)
-#v23y_B1_np = sym.lambdify(q, v23y_B1_sym)
-##
-#v24x_B1_np = sym.lambdify(q, v24x_B1_sym)
-#v24y_B1_np = sym.lambdify(q, v24y_B1_sym)
