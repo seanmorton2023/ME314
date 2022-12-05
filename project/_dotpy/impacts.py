@@ -302,7 +302,51 @@ def gen_sinusoid_subs(eqns_matrix):
 
     return sinusoid_subs, sinusoid_subs_inv
 
-def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
+def test_gen_impact_updates():
+    lamb = sym.symbols(r'\lambda')
+
+    #qd_q is similar to q_ext, only derivatives come first so that 
+    #substitution works properly
+    qd_q = sym.Matrix([sym.Matrix(q.diff(t)), q])
+
+    #substitution dictionaries and lists for use in calculating impact
+    #update equations
+    q_state_dict, qd_taum_dict, qd_taup_dict, \
+        q_taum_list, qd_taum_list, qd_taup_list = gen_sym_subs(q, qd_q)
+
+    #for phi in phiq_list_sym:
+    sample_phi = phiq_list_sym[0]
+    dL_dqd, dphi_dq, hamiltonian_term = \
+            impact_symbolic_eqs(sample_phi,lagrangian, q, q_state_dict)
+
+    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
+    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
+
+    #set up equations to be solved
+    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
+    #replace sinusoid terms with dummy variables
+    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
+    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
+    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
+
+    #solve for the values of qdot and lambda
+    sol_vars = qd_taup_list
+    sol_vars.append(lamb)
+
+    #solve impacts equations as a set of polynomials
+    #eqns_matrix_poly = eqns_matrix_poly.evalf()
+
+    print(f"Solving impact equations. Started at: {datetime.now()}")
+    t0 = time.time()
+    solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, minimal = True)
+    tf = time.time()
+
+    print(f"\nImpacts solve: \nElapsed: {round(tf - t0, 2)} seconds")
+    print(solns)
+    dill_dump('../dill/impacts_solns_v1.dill', solns)
+    #dill_dump('../dill/impacts_solns_nonlinsolve.dill', out_set)
+
+def gen_impact_eqns(phiq_list_sym, lagrangian, q, const_subs):
     '''Methodically calculate all the possible impact updates 
     for the two boxes, using the impact equations derived in class.
 
@@ -323,98 +367,60 @@ def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
     q_state_dict, qd_taum_dict, qd_taup_dict, \
         q_taum_list, qd_taum_list, qd_taup_list = gen_sym_subs(q, qd_q)
 
-    #for phi in phiq_list_sym:
-    sample_phi = phiq_list_sym[0]
-    dL_dqd, dphi_dq, hamiltonian_term = \
-            impact_symbolic_eqs(sample_phi,lagrangian, q, q_state_dict)
+    impacts_eqns_list = []
+    for phi in tqdm(phiq_list_sym):
+        dL_dqd, dphi_dq, hamiltonian_term = \
+            impact_symbolic_eqs(phi,lagrangian, q, q_state_dict)
 
-    '''
-    lamb_dphi_dq = lamb * dphi_dq
+        lamb_dphi_dq = lamb * dphi_dq
 
-    dL_dqdot_eqn = \
-        dL_dqd.subs(qd_taup_dict) \
-        - dL_dqd.subs(qd_taum_dict) \
-        - lamb_dphi_dq
+        dL_dqdot_eqn = \
+            dL_dqd.subs(qd_taup_dict) \
+            - dL_dqd.subs(qd_taum_dict) \
+            - lamb_dphi_dq
 
-    hamiltonian_eqn = \
-        hamiltonian_term.subs(qd_taup_dict) \
-        - hamiltonian_term.subs(qd_taum_dict) \
+        hamiltonian_eqn = \
+            hamiltonian_term.subs(qd_taup_dict) \
+            - hamiltonian_term.subs(qd_taum_dict) \
     
-    #sub in m, g, L, w
-    dL_dqdot_eqn    = dL_dqdot_eqn.subs(   const_subs)
-    hamiltonian_eqn = hamiltonian_eqn.subs(const_subs)
+        #sub in m, g, L, w
+        dL_dqdot_eqn    = dL_dqdot_eqn.subs(   const_subs)
+        hamiltonian_eqn = hamiltonian_eqn.subs(const_subs)
 
-    #hamiltonian_eqn = hamiltonian_eqn.simplify()
+        #these need to be simplified or else they're uninterpretable
+        #print(f"Simplifying impact equations. Started at: {datetime.now()}")
+        #t0 = time.time()
+        dL_dqdot_eqn = sym.simplify(dL_dqdot_eqn)
+        hamiltonian_eqn = sym.simplify(hamiltonian_eqn)
+        dL_dqdot_eqn = dL_dqdot_eqn.T
+        #tf = time.time()
+
+        #print(f"\nImpacts simplify: \nElapsed: {round(tf - t0, 2)} seconds")
+        eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
+        impacts_eqns_list.append(eqns_matrix)
+        
+    #save outcome to a file so we can load it during simulation
+    #dill_dump('../dill/impacts_eqns_32x.dill',impacts_eqns_list)
+    return impacts_eqns_list
+
+def impact_update(s_ext, index, impact_eqs):
+    '''Once an impact has been detected, apply the necessary
+    impact update based on which equation has just occurred.
+
+    Args:
+    - s_ext: extended state of system. Contains x, y, theta1, theta2,
+        phi1, phi2, and their derivatives.
+    - index: index of the impact that has occurred. This was calculated
+        using the numerical form of each phi(q), which will then be
+        used to calculate the impact equations for a given index of phi(q).
+    - impact_eqs: the symbolic impact equations that need to be solved.
+        
     '''
 
-    '''
-    #these need to be simplified or else they're uninterpretable
-    print(f"Simplifying impact equations. Started at: {datetime.now()}")
-    t0 = time.time()
-    dL_dqdot_eqn = sym.simplify(dL_dqdot_eqn)
-    hamiltonian_eqn = sym.simplify(hamiltonian_eqn)
-    dL_dqdot_eqn = dL_dqdot_eqn.T
-    tf = time.time()
-
-    print(f"\nImpacts simplify: \nElapsed: {round(tf - t0, 2)} seconds")
-
-    #save results for the first round of this to a file so 
-    #we don't have to worry about saving + reloading
-    dill_dump('../dill/impacts_hamiltonian_v1.dill', hamiltonian_eqn)
-    dill_dump('../dill/impacts_dL_dqdot_eq_v1.dill', dL_dqdot_eqn)
-    '''
-
-    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
-    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
-
-    #set up equations to be solved
-    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
-    #replace sinusoid terms with dummy variables
-    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
-    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
-    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
-
-
-    #solve for the values of qdot and lambda
-    sol_vars = qd_taup_list
-    sol_vars.append(lamb)
-
-    #solve impacts equations as a set of polynomials
-    eqns_matrix_poly = eqns_matrix_poly.evalf()
-
-    print(f"Solving impact equations. Started at: {datetime.now()}")
-    t0 = time.time()
-    #solns = sym.solve(eqns_matrix, sol_vars, dict = True, simplify = False, manual=True)
-    #out_set = sym.nonlinsolve(eqns_matrix_poly, sol_vars)
-    #solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, \
-    #                      minimal = True, check = False  )
-    solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, minimal = True)
-
-    tf = time.time()
-
-    print(f"\nImpacts solve: \nElapsed: {round(tf - t0, 2)} seconds")
-    print(solns)
-    dill_dump('../dill/impacts_solns_v1.dill', solns)
-    #dill_dump('../dill/impacts_solns_nonlinsolve.dill', out_set)
-
-
-
+    #still need to decide if I'm going to have it as 7 equations, solved
+    #all at once using nsolve, or 6 equations, evaluated and then subbed into
+    #EQ to solve for lambda
     pass
-
-def jupyter_testing():
-    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
-    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
-
-    #set up equations to be solved
-    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
-    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
-    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
-
-    #replace sinusoid terms with dummy variables
-    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
-    display(eqns_matrix_poly)
-
-
 #things to only be calculated here
 if __name__ == '__main__':
 
@@ -422,14 +428,16 @@ if __name__ == '__main__':
 
     #calculate_sym_vertices()
     
-    print("Preparing Lagrangian and impact constraints...")
+    print("Preparing Lagrangian...")
     xy_coords_list = convert_coords_to_xy()
     vertices_list_np = [sym.lambdify(q, expr) for expr in xy_coords_list]
     phiq_list_sym = calculate_sym_phiq(xy_coords_list)
     lagrangian = compute_lagrangian()
 
-    gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
-    
+    print("Generating impact equations...")
+    #test_gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
+    out = gen_impact_eqns(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
+
 
 
     #display these on Jupyter notebook, so we need to save them to file
