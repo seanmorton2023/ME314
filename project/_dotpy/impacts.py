@@ -260,14 +260,15 @@ def impact_symbolic_eqs(phi, lagrangian, q, q_subs):
     
     return [expr_a, expr_b, expr_c]
 
-def gen_sinusoid_subs(expr_matrix):
+def gen_sinusoid_subs(eqns_matrix):
     '''Takes a matrix of expressions, and return a set of all sinusoidal terms
     contained within that matrix.
 
     Motivation: one good candidate for solving the impact equations is sympy.nonlinsolve(),
         which cannot take in sinusoidal terms - it can only 
 
-
+    Returns: sinusoidal terms substitution dict (with placeholders "c1, c2, ..." as sub)
+        and its inverse (mapping from dummy variables c1, c2, ... back to sin(...) ).
     '''
     factors_list = np.array([])
     #generally I should avoid nested for loops but this is a small # of computations
@@ -368,23 +369,51 @@ def gen_impact_updates(phiq_list_sym, lagrangian, q, const_subs):
 
     #set up equations to be solved
     #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
+    #replace sinusoid terms with dummy variables
     eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
-    
+    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
+    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
+
+
     #solve for the values of qdot and lambda
     sol_vars = qd_taup_list
     sol_vars.append(lamb)
 
+    #solve impacts equations as a set of polynomials
+    eqns_matrix_poly = eqns_matrix_poly.evalf()
+
     print(f"Solving impact equations. Started at: {datetime.now()}")
     t0 = time.time()
-    solns = sym.solve(eqns_matrix, sol_vars, dict = True, simplify = False, manual=True)
+    #solns = sym.solve(eqns_matrix, sol_vars, dict = True, simplify = False, manual=True)
+    #out_set = sym.nonlinsolve(eqns_matrix_poly, sol_vars)
+    #solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, \
+    #                      minimal = True, check = False  )
+    solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, minimal = True)
+
     tf = time.time()
 
     print(f"\nImpacts solve: \nElapsed: {round(tf - t0, 2)} seconds")
     print(solns)
     dill_dump('../dill/impacts_solns_v1.dill', solns)
+    #dill_dump('../dill/impacts_solns_nonlinsolve.dill', out_set)
+
 
 
     pass
+
+def jupyter_testing():
+    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
+    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
+
+    #set up equations to be solved
+    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
+    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
+    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
+
+    #replace sinusoid terms with dummy variables
+    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
+    display(eqns_matrix_poly)
+
 
 #things to only be calculated here
 if __name__ == '__main__':
@@ -392,27 +421,15 @@ if __name__ == '__main__':
     #---------global variables for use in other files-------------#
 
     #calculate_sym_vertices()
-    '''
+    
     print("Preparing Lagrangian and impact constraints...")
     xy_coords_list = convert_coords_to_xy()
     vertices_list_np = [sym.lambdify(q, expr) for expr in xy_coords_list]
     phiq_list_sym = calculate_sym_phiq(xy_coords_list)
     lagrangian = compute_lagrangian()
 
-    #gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
-    '''
-
-    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
-    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
-
-    #set up equations to be solved
-    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
-    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
-
+    gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
     
-
-
-
 
 
     #display these on Jupyter notebook, so we need to save them to file
