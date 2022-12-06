@@ -17,7 +17,9 @@ from helpers import *
 from plotting_helpers import *
 
 #framerate_ms = 20 #50fps; round number preferred
-framerate_ms = 20
+#framerate_ms = 20
+framerate_ms = 250
+
 
 #define our sample trajectories for each angle
 dt = 0.01
@@ -32,7 +34,9 @@ q_array_test = np.array([
 ]).T
 
 #q_array = q_array_test[:]
-q_array = pd.read_csv('../csv/q_array.csv', header=None).to_numpy()
+#q_array = pd.read_csv('../csv/q_array.csv', header=None).to_numpy()
+q_array = pd.read_csv('../csv/q_array_impacts.csv', header=None).to_numpy()
+
 
 #----------------initialize GUI----------------------#
 gui = GUI(win_height, win_width) #namespace for variables: geometry.py

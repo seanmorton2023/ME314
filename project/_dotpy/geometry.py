@@ -93,13 +93,31 @@ win_width = 800
 pixels_to_unit = 200
 coordsys_len = 50
 
-vertices_mat = w_num * np.array([
-    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #1/... term ensures last translation term is 1
-    [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num],
-    [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
-    [ np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
-    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
+#vertices_mat = w_num * np.array([
+#    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #1/... term ensures last translation term is 1
+#    [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num],
+#    [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
+#    [ np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
+#    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
+#]).T #in "bar" form  so they can be multiplied by trans. matrix
+
+#vertices_mat = w_num * np.array([
+#    [ 1/2.0,  1/2.0, 0, 1/w_num], #1/... term ensures last translation term is 1
+#    [-1/2.0,  1/2.0, 0, 1/w_num],
+#    [-1/2.0, -1/2.0, 0, 1/w_num],
+#    [ 1/2.0, -1/2.0, 0, 1/w_num],
+#    [ 1/2.0,  1/2.0, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
+#]).T #in "bar" form  so they can be multiplied by trans. matrix
+
+vertices_mat = np.array([
+    [ w_num/2.0,  w_num/2.0, 0, 1], 
+    [-w_num/2.0,  w_num/2.0, 0, 1],
+    [-w_num/2.0, -w_num/2.0, 0, 1],
+    [ w_num/2.0, -w_num/2.0, 0, 1],
+    [ w_num/2.0,  w_num/2.0, 0, 1], #add first vertex onto end of matrix again so line wraps around
 ]).T #in "bar" form  so they can be multiplied by trans. matrix
+
+
 
 line_coords_mat = np.array([
     [0,     0, 0, 1],

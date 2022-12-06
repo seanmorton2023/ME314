@@ -173,7 +173,29 @@ def compute_solve_EL(F_mat):
     #pickle the output of this constrained Euler-Lagrange derivation
     pass
 
-def construct_dxdt(eqns_new, q_ext):
+def construct_dxdt(f_eqs_array):
+    '''Generates our dynamics function dxdt() using the
+    second-derivative equations derived from the Euler-Lagrange
+    equations.
+
+    Arguments:
+    - f_eqs_array: an array of Numpy functions, lambda functions, or
+        other univatiate functions of time
+
+    Returns: dxdt, a function f(t,s)
+    '''
+    F_mat = sym.Matrix([
+        sym.symbols(r'F_x'),
+        sym.symbols(r'F_y'),
+        sym.symbols(r'F_\theta1'),
+        sym.symbols(r'F_\theta2'),
+        sym.symbols(r'F_\phi1'),
+        sym.symbols(r'F_\phi2'),
+    ])
+
+    eqns_new = dill_load('../dill/EL_simplified.dill')
+    q_ext = sym.Matrix([q, q.diff(t), F_mat])
+
     #lambdify the second derivative equations and construct dynamics function
     xdd_sy      = eqns_new[0].rhs
     ydd_sy      = eqns_new[1].rhs
@@ -189,39 +211,28 @@ def construct_dxdt(eqns_new, q_ext):
     phi1dd_np   = sym.lambdify(q_ext,   phi1dd_sy)
     phi2dd_np   = sym.lambdify(q_ext,   phi2dd_sy)
 
-    return xdd_np, \
-            ydd_np, \
-            theta1dd_np, \
-            theta2dd_np, \
-            phi1dd_np, \
-            phi2dd_np
 
-###
+    def dxdt(t,s):
 
-def dxdt(t,s):
-    F_x      = 0 
-    #F_y      = 0
-    F_y = 19.62
-    F_theta1 = 0
-    F_theta2 = 0
-    F_phi1   = 0
-    F_phi2   = 0
-    F_array = [F_x, F_y, F_theta1, F_theta2, F_phi1, F_phi2]
+        F_array = [f(t) for f in f_eqs_array]
+        s_ext = np.append(s, F_array)
+        #format of s_ext: 
+        #0-5: state values
+        #6-11: values of derivative of state
+        #12-17: values of force at given time
     
-    s_ext = np.append(s, F_array)
-    #format of s: 
-    #0-5: state values
-    #6-11: values of derivative of state
-    
-    return np.array([
-        *s[6:12],         
-        xdd_np(*s_ext),      
-        ydd_np(*s_ext),      
-        theta1dd_np(*s_ext), 
-        theta2dd_np(*s_ext), 
-        phi1dd_np(*s_ext),   
-        phi2dd_np(*s_ext),
-    ])
+        return np.array([
+            *s[6:12],         
+            xdd_np(*s_ext),      
+            ydd_np(*s_ext),      
+            theta1dd_np(*s_ext), 
+            theta2dd_np(*s_ext), 
+            phi1dd_np(*s_ext),   
+            phi2dd_np(*s_ext),
+        ])
+
+    #return type is a function
+    return dxdt
 
 ###
 
@@ -235,7 +246,7 @@ def full_simulation(ICs):
     eqns_new = dill_load(pkl_filename)
     #print(eqns_new)
 
-    q_ext = sym.Matrix([q, q.diff(t), F_mat])
+    #q_ext = sym.Matrix([q, q.diff(t), F_mat])
 
     #simulate the system with no impacts applied
     q_array = simulate(dxdt, ICs, t_span, dt, rk4)
@@ -268,46 +279,12 @@ def ham_f():
     dill_dump(ham_file, ham_sym)
     print(f"Wrote Hamiltonian to {ham_file}.")
     return ham_sym
-    
-
-if __name__ == '__main__':
-
-    F_mat = sym.Matrix([
-        sym.symbols(r'F_x'),
-        sym.symbols(r'F_y'),
-        sym.symbols(r'F_\theta1'),
-        sym.symbols(r'F_\theta2'),
-        sym.symbols(r'F_\phi1'),
-        sym.symbols(r'F_\phi2'),
-    ])
-
-    eqns_new = dill_load('../dill/EL_simplified.dill')
-    q_ext = sym.Matrix([q, q.diff(t), F_mat])
-    xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
-        = construct_dxdt(eqns_new, q_ext)
-
-    ##for Lagrangian debug - save and then load into Jupyter NB
-    #lagrangian = compute_lagrangian()
-    #lagrangian_filename = '../dill/lagrangian.dill'
-    #dill_dump(lagrangian_filename, lagrangian)
-
-    # save output of Euler-Lagrange equations for later use/reuse
-    #eqns_new = compute_solve_EL(F_mat)
-    #temp = eqns_new
-    #pkl_filename = '../dill/EL_simplified.dill'
-    #dill_dump(pkl_filename, temp) 
-
-    t_span = [0, 10]
-    dt = 0.01
-
-    theta0 = np.pi/4
-    phi0 = np.pi/3
-    init_posns = [1, 1, theta0, -theta0, phi0, -phi0]
-    init_velocities = [0, 0, 0, 0, 0, 0]
-    ICs = init_posns + init_velocities
-    full_simulation(ICs) #saves results to q array
-
-    #plot Hamiltonian array over time
+ 
+def plot_results():
+    '''For reading Hamiltonian + trajectory results from files
+    and plotting them over time.
+    '''
+     #plot Hamiltonian array over time
     q_array = pd.read_csv('../csv/q_array.csv', header=None).to_numpy()
     ham_sym = dill_load('../dill/hamiltonian.dill')
     q_noforces = sym.Matrix([q, q.diff(t)])
@@ -335,4 +312,54 @@ if __name__ == '__main__':
     plt.title("Trajectory for current simulation")
     plt.legend()
     plt.show()
+
+
+if __name__ == '__main__':
+
+    #F_mat = sym.Matrix([
+    #    sym.symbols(r'F_x'),
+    #    sym.symbols(r'F_y'),
+    #    sym.symbols(r'F_\theta1'),
+    #    sym.symbols(r'F_\theta2'),
+    #    sym.symbols(r'F_\phi1'),
+    #    sym.symbols(r'F_\phi2'),
+    #])
+
+    #eqns_new = dill_load('../dill/EL_simplified.dill')
+    #q_ext = sym.Matrix([q, q.diff(t), F_mat])
+    #xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
+    #    = construct_dxdt(eqns_new, q_ext)
+    #dxdt = construct_dxdt(eqns_new, q_ext)
+    F_eqs_array = np.array([
+        lambda t: 0, #F_x
+        lambda t: 19.62, #F_y
+        lambda t: 0, #F_theta1
+        lambda t: 0, #F_theta2
+        lambda t: 0, #F_phi1
+        lambda t: 0, #F_phi2
+    ])
+
+    dxdt = construct_dxdt(F_eqs_array)
+
+
+    ##for Lagrangian debug - save and then load into Jupyter NB
+    #lagrangian = compute_lagrangian()
+    #lagrangian_filename = '../dill/lagrangian.dill'
+    #dill_dump(lagrangian_filename, lagrangian)
+
+    # save output of Euler-Lagrange equations for later use/reuse
+    #eqns_new = compute_solve_EL(F_mat)
+    #temp = eqns_new
+    #pkl_filename = '../dill/EL_simplified.dill'
+    #dill_dump(pkl_filename, temp) 
+
+    t_span = [0, 10]
+    dt = 0.01
+
+    theta0 = np.pi/4
+    phi0 = np.pi/3
+    init_posns = [1, 1, theta0, -theta0, phi0, -phi0]
+    init_velocities = [0, 0, 0, 0, 0, 0]
+    ICs = init_posns + init_velocities
+    full_simulation(ICs) #saves results to q array
 
