@@ -17,8 +17,8 @@ from helpers import *
 from plotting_helpers import *
 
 #framerate_ms = 20 #50fps; round number preferred
+framerate_ms = 100
 #framerate_ms = 20
-framerate_ms = 250
 
 
 #define our sample trajectories for each angle
@@ -65,4 +65,6 @@ gui.timer_id = gui.root.after(gui.framerate_ms, gui.on_timer)
 gui.root.mainloop()
 
 
-
+    ##save results to a CSV file for use in animation. This needs to be removed before submission.
+    #pd.DataFrame(traj_array.T).to_csv('../csv/q_array_impacts.csv', header=None, index=None)
+    #return traj_array

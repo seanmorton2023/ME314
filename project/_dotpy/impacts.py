@@ -105,16 +105,20 @@ def impact_condition(s):
     v21x_B1_np, v21y_B1_np, v22x_B1_np, v22y_B1_np, \
     v23x_B1_np, v23y_B1_np, v24x_B1_np, v24y_B1_np  = vertices_list_np
     
+    #define tolerance for impact condition
+    ctol = 1/24.0 #proportional to w/2
+    bound = w_num/2.0 + ctol
+
     impact_conds = np.array([
-        -w_num/2.0 < v11x_B2_np(*s) < w_num/2.0   and   -w_num/2.0 < v11y_B2_np(*s) < w_num/2.0,
-        -w_num/2.0 < v12x_B2_np(*s) < w_num/2.0   and   -w_num/2.0 < v12y_B2_np(*s) < w_num/2.0,
-        -w_num/2.0 < v13x_B2_np(*s) < w_num/2.0   and   -w_num/2.0 < v13y_B2_np(*s) < w_num/2.0,
-        -w_num/2.0 < v14x_B2_np(*s) < w_num/2.0   and   -w_num/2.0 < v14y_B2_np(*s) < w_num/2.0,
+        -bound < v11x_B2_np(*s) < bound   and   -bound < v11y_B2_np(*s) < bound,
+        -bound < v12x_B2_np(*s) < bound   and   -bound < v12y_B2_np(*s) < bound,
+        -bound < v13x_B2_np(*s) < bound   and   -bound < v13y_B2_np(*s) < bound,
+        -bound < v14x_B2_np(*s) < bound   and   -bound < v14y_B2_np(*s) < bound,
         
-        -w_num/2.0 < v21x_B1_np(*s) < w_num/2.0   and   -w_num/2.0 < v21y_B1_np(*s) < w_num/2.0,
-        -w_num/2.0 < v22x_B1_np(*s) < w_num/2.0   and   -w_num/2.0 < v22y_B1_np(*s) < w_num/2.0,
-        -w_num/2.0 < v23x_B1_np(*s) < w_num/2.0   and   -w_num/2.0 < v23y_B1_np(*s) < w_num/2.0,
-        -w_num/2.0 < v24x_B1_np(*s) < w_num/2.0   and   -w_num/2.0 < v24y_B1_np(*s) < w_num/2.0,     
+        -bound < v21x_B1_np(*s) < bound   and   -bound < v21y_B1_np(*s) < bound,
+        -bound < v22x_B1_np(*s) < bound   and   -bound < v22y_B1_np(*s) < bound,
+        -bound < v23x_B1_np(*s) < bound   and   -bound < v23y_B1_np(*s) < bound,
+        -bound < v24x_B1_np(*s) < bound   and   -bound < v24y_B1_np(*s) < bound,     
     ])
     
     #find any impact conditions that have been met
@@ -122,19 +126,20 @@ def impact_condition(s):
     impact_indices = np.nonzero(impact_conds)[0].tolist() #indices where true
     
     if impact_met:
-        print("\nImpact condition debug:")
-        #print("V11x, V11y, V21x, and V21y values:")
-        print("V12x, V12y, V21x, and V21y values:")
-        print(v12x_B2_np(*s))
-        print(v12y_B2_np(*s))
-        print(v21x_B1_np(*s))
-        print(v21y_B1_np(*s))
+        #print("\nImpact condition debug:")
+        ##print("V11x, V11y, V21x, and V21y values:")
+        #print("V12x, V12y, V21x, and V21y values:")
+        #print(v12x_B2_np(*s))
+        #print(v12y_B2_np(*s))
+        #print(v21x_B1_np(*s))
+        #print(v21y_B1_np(*s))
 
-        print("\nV11x, V11y, V22x, and V22y values:")
-        print(v11x_B2_np(*s))
-        print(v11y_B2_np(*s))
-        print(v22x_B1_np(*s))
-        print(v22y_B1_np(*s))
+        #print("\nV11x, V11y, V22x, and V22y values:")
+        #print(v11x_B2_np(*s))
+        #print(v11y_B2_np(*s))
+        #print(v22x_B1_np(*s))
+        #print(v22y_B1_np(*s))
+        pass
 
     return impact_met, impact_indices
 
@@ -165,17 +170,17 @@ def phi_nearzero(s, atol):
     #list of indices close to 0
     closetozero = np.isclose( phi_arr_np, np.zeros(phi_arr_np.shape), atol=atol )
     
-    print("\nPhi_nearzero debug:")
-    print(f"\nPhi_arr_np: \n{phi_arr_np}")
+    #print("\nPhi_nearzero debug:")
+    #print(f"\nPhi_arr_np: \n{phi_arr_np}")
 
 
     #this gives the indices of phi close to 0
     any_nearzero = np.any(closetozero)
     phi_indices = np.nonzero(closetozero)[0].tolist()
     
-    return any_nearzero, phi_indices
+    return any_nearzero, phi_indices, phi_arr_np
       
-def filter_phiq(impact_indices, phi_indices):
+def filter_phiq(impact_indices, phi_indices, phi_arr_np):
     '''Simultaneous impact must be considered for this project, as the 
     user interaction means initial conditions cannot be pre-set such that
     no simultaneous impacts occur. 
@@ -202,15 +207,22 @@ def filter_phiq(impact_indices, phi_indices):
     impact_indices = np.array(impact_indices)
     inds = np.in1d(phi_indices//4, impact_indices) #evaluates whether elements of phi_indices
                                                     #are related to an impact condition, T/F
-    c = np.array(np.nonzero(inds)[0]) #turns locations of these T values to indices
+    c = np.array(np.nonzero(inds)[0]) #turns locations of these True values to indices
     valid_phiq_indices = phi_indices[c]  
+    
+    #find location of min valid phi(q)
+    valid_phiq = phi_arr_np[valid_phiq_indices]
+    argmin = valid_phiq_indices[np.argmin(valid_phiq)]
 
-    print("\nFilter_Phiq debug:")
-    print(f"\nImpact_indices: \n{impact_indices}")
-    print(f"\nPhi_indices: \n{phi_indices}")
+    #print("\nFilter_Phiq debug:")
+    #print(f"\nImpact_indices: \n{impact_indices}")
+    #print(f"\nPhi_indices: \n{phi_indices}")
 
-    return valid_phiq_indices          #returns the phi(q) equations that both evaluate to ~0 and
-                                       #are related to an impact condition that has been met
+    #returns the phi(q) equations that both evaluate to ~0 and
+    #are related to an impact condition that has been met.
+    #returns location of the min phi(q) as well, for knowing which one to apply
+    return valid_phiq_indices, argmin          
+                                                   
 
 def gen_sym_subs(q, qd_q):
     '''
@@ -289,93 +301,6 @@ def impact_symbolic_eqs(phi, lagrangian, q, q_subs):
     
     return [expr_a, expr_b, expr_c]
 
-def gen_sinusoid_subs(eqns_matrix):
-    '''Takes a matrix of expressions, and return a set of all sinusoidal terms
-    contained within that matrix.
-
-    Motivation: one good candidate for solving the impact equations is sympy.nonlinsolve(),
-        which cannot take in sinusoidal terms - it can only 
-
-    Returns: sinusoidal terms substitution dict (with placeholders "c1, c2, ..." as sub)
-        and its inverse (mapping from dummy variables c1, c2, ... back to sin(...) ).
-    '''
-    factors_list = np.array([])
-    #generally I should avoid nested for loops but this is a small # of computations
-    for row in eqns_matrix:
-        for factor in row.as_ordered_terms():
-            factors_list = np.append(factors_list, list(factor.as_coeff_mul()[-1]) )
-
-    factors_dict = {}
-    for factor in factors_list:
-        if factor in factors_dict.keys():
-            factors_dict[factor] += 1
-        else:
-            factors_dict[factor] = 1
-
-    #make a loop structure for creating the simplest set of factors
-    factors_list = np.array(list(factors_dict.keys()))
-    condition = np.any([x.is_Mul or x.is_Add or x.is_Pow for x in factors_list])
-
-    while condition:
-        factors_dict = decompose_factors_dict(factors_dict) #from helpers.py
-        factors_list = np.array(list(factors_dict.keys()))
-        condition = np.any([x.is_Mul or x.is_Add or x.is_Pow for x in factors_list])
-    
-    #get list of sin() and cos() terms
-    sinusoids = [f for f in factors_list if (type(f) == sym.cos or type(f) == sym.sin)]
-
-    #make symbolic substitutions for sinusoids in the impact equations - this 
-    #will make the impact equations into polynomials, solvable by nonlinsolve()
-    sinusoid_subs = {sinusoids[i] : sym.symbols(f"c_{i+1}") for i in range(len(sinusoids))}
-    sinusoid_subs_inv = {val : key for key, val in sinusoid_subs.items()}
-
-    return sinusoid_subs, sinusoid_subs_inv
-
-def test_gen_impact_updates():
-    lamb = sym.symbols(r'\lambda')
-    t = sym.symbols(r't')
-
-    #qd_q is similar to q_ext, only derivatives come first so that 
-    #substitution works properly
-    qd_q = sym.Matrix([sym.Matrix(q.diff(t)), q])
-
-    #substitution dictionaries and lists for use in calculating impact
-    #update equations
-    q_state_dict, qd_taum_dict, qd_taup_dict, \
-        q_taum_list, qd_taum_list, qd_taup_list = gen_sym_subs(q, qd_q)
-
-    #for phi in phiq_list_sym:
-    sample_phi = phiq_list_sym[0]
-    dL_dqd, dphi_dq, hamiltonian_term = \
-            impact_symbolic_eqs(sample_phi,lagrangian, q, q_state_dict)
-
-    hamiltonian_eqn = dill_load('../dill/impacts_hamiltonian_v1.dill')
-    dL_dqdot_eqn =    dill_load('../dill/impacts_dL_dqdot_eq_v1.dill')
-
-    #set up equations to be solved
-    #insert the hamiltonian at the (n)th row in 0-based indexing, i.e. add onto end of matrix
-    #replace sinusoid terms with dummy variables
-    eqns_matrix = dL_dqdot_eqn.row_insert( len(q), sym.Matrix([hamiltonian_eqn]))
-    sinusoidal_subs, sinusoidal_subs_inv = gen_sinusoid_subs(eqns_matrix)
-    eqns_matrix_poly = eqns_matrix.subs(sinusoidal_subs)
-
-    #solve for the values of qdot and lambda
-    sol_vars = qd_taup_list
-    sol_vars.append(lamb)
-
-    #solve impacts equations as a set of polynomials
-    #eqns_matrix_poly = eqns_matrix_poly.evalf()
-
-    print(f"Solving impact equations. Started at: {datetime.now()}")
-    t0 = time.time()
-    solns = sym.solve(eqns_matrix_poly, sol_vars, dict = True, simplify = False, minimal = True)
-    tf = time.time()
-
-    print(f"\nImpacts solve: \nElapsed: {round(tf - t0, 2)} seconds")
-    print(solns)
-    dill_dump('../dill/impacts_solns_v1.dill', solns)
-    #dill_dump('../dill/impacts_solns_nonlinsolve.dill', out_set)
-
 def gen_impact_eqns(phiq_list_sym, lagrangian, q, const_subs):
     '''Methodically calculate all the possible impact updates 
     for the two boxes, using the impact equations derived in class.
@@ -434,16 +359,13 @@ def gen_impact_eqns(phiq_list_sym, lagrangian, q, const_subs):
     #dill_dump('../dill/impacts_eqns_32x.dill',impacts_eqns_list)
     return impacts_eqns_list
 
-def impact_update(s, index, impact_eqs, sol_vars):
+def impact_update(s, impact_eqs, sol_vars):
     '''Once an impact has been detected, apply the necessary
     impact update based on which equation has just occurred.
 
     Args:
     - s: full state of system. Contains x, y, theta1, theta2,
         phi1, phi2, and their derivatives.
-    - index: index of the impact that has occurred. This was calculated
-        using the numerical form of each phi(q), which will then be
-        used to calculate the impact equations for a given index of phi(q).
     - impact_eqs: the symbolic impact equations that need to be solved.
     - sol_vars: list of variables we're solving for. qd1_tau+, qd2_tau+, ..., lambda.
     '''
@@ -472,7 +394,9 @@ def impact_update(s, index, impact_eqs, sol_vars):
     
         except Exception as e:
             print(f"Nsolve threw an error: {e}")
-        init_guess = -1.5*init_guess
+        #init_guess = -1.5*init_guess
+        init_guess = -0.5*init_guess
+
 
     #I'm gonna assume order of dict values stays as qd_tau1+, qd_tau2+, ... qd_tau6+ but
     #this may be something to debug if my impacts look weird
@@ -507,7 +431,10 @@ def simulate_impact(t_span, dt, ICs, integrate, dxdt, impact_condition, impact_u
     impact_eqns_0_32 = dill_load('../dill/impact_eqns_0_32.dill')
     #atol = 1E-4 # for phiq_near_zero
     #atol = 3E-3 # for phiq_near_zero
-    atol = 1E-2 # for phiq_near_zero
+    #atol = 1E-2 # for phiq_near_zero
+    #atol = 5E-2 # for phiq_near_zero
+
+    atol = 5E-1 # for phiq_near_zero
 
 
     #qd_q is similar to q_ext, only derivatives come first so that 
@@ -532,71 +459,6 @@ def simulate_impact(t_span, dt, ICs, integrate, dxdt, impact_condition, impact_u
         t = t_array[i]
         s = traj_array[:,i]
 
-
-        #DEBUG: plot relative positioning of particles over time
-        x, y, theta1, theta2, phi1, phi2 = s[0:6]
-
-        Rab = np.array([
-            [np.cos(theta2), -np.sin(theta2), 0],
-            [np.sin(theta2),  np.cos(theta2), 0],
-            [              0,                0, 1],
-        ])
-
-        RdB2 = np.array([
-            [np.cos(phi2), -np.sin(phi2), 0],
-            [np.sin(phi2),  np.cos(phi2), 0],
-            [            0,              0, 1],
-        ])
-
-        p_bd = np.array([0, -L_num, 0])
-
-        Gab = SOnAndRnToSEn(Rab, [0, 0, 0])
-        Gbd = SOnAndRnToSEn(np.eye(3), p_bd)
-        GdB2 = SOnAndRnToSEn(RdB2, [0, 0, 0])
-
-        Gsa = SOnAndRnToSEn(np.eye(3), [x, y, 0])
-        Gsb = Gsa @ Gab
-        Gsd = Gsb @ Gbd
-        GsB2 = Gsd @ GdB2 #formerly Gsf
-
-
-        #---------------left side---------------#
-
-        Rac = np.array([
-            [np.cos(theta1), -np.sin(theta1), 0],
-            [np.sin(theta1),  np.cos(theta1), 0],
-            [              0,                0, 1],
-        ])
-
-        ReB1 = np.array([
-            [np.cos(phi1), -np.sin(phi1), 0],
-            [np.sin(phi1),  np.cos(phi1), 0],
-            [            0,              0, 1],
-        ])
-
-        p_ce = np.array([0, -L_num, 0])
-
-        Gac = SOnAndRnToSEn(Rac, [0, 0, 0])
-        Gce = SOnAndRnToSEn(np.eye(3), p_ce)
-        GeB1 = SOnAndRnToSEn(ReB1, [0, 0, 0])
-
-        Gsa = SOnAndRnToSEn(np.eye(3), [x, y, 0])
-        Gsc = Gsa @ Gac
-        Gse = Gsc @ Gce
-        GsB1 = Gse @ GeB1 #formerly Gsg
-
-        GB1B2 = InvSEn(GsB1) @ GsB2
-        GB2B1 = InvSEn(GB1B2)
-
-        print(" Impacts simulation debug:")
-        #print(f"GB1B2: \n{GB1B2}")
-        #print(f"GB2B1: \n{GB2B1}")
-        #print(f"Expected distance between particles: {np.sin(theta1) - np.sin(theta2)}")
-        print("Press any button to continue. ")
-        input()
-
-
-
         #calculate s for next timestep
         s_next = integrate(dxdt, s, t, dt)
 
@@ -611,26 +473,37 @@ def simulate_impact(t_span, dt, ICs, integrate, dxdt, impact_condition, impact_u
             ''' 
             
             #find phi(q) we can apply to the system. choose one to apply
-            any_nearzero, phi_indices = phi_nearzero(s_next[0:6], atol)
-            valid_phiq_indices = filter_phiq(impact_indices, phi_indices)
+            any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], atol)
+            valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
             
             #this is a case I eventually want to figure out
             if len(valid_phiq_indices) == 0:
                 print("Invalid phi(q)/impact condition combination") #throw an error in the future
             else:
-                index = valid_phiq_indices[0]
-                impact_eqs = impact_eqns_0_32[index]
+                #index = valid_phiq_indices[0]
+                #impact_eqs = impact_eqns_0_32[index]
+                impact_eqs = impact_eqns_0_32[argmin]
 
                 #solve for next state, using numerical nsolve() on symbolic expressions
-                s_alt = impact_update(s_next, index, impact_eqs, sol_vars)
-                #print("\nSimulate Impact debug:")
-                ##print(f"s_next: \n{s_next}")
-                #print(f"s_alt: \n{s_alt}")
-                #print(f"Type of s_alt: {[type(x) for x in s_alt]}")
+                s_alt = impact_update(s_next, impact_eqs, sol_vars)
+
+                #if particle is still inside block at next timestep, integrate for 2dt
+                #impact_next, _ = impact_condition(s_alt[0:6])
+                #if impact_next:    
+                #    s_next = integrate(dxdt, s_alt, t, 2*dt)
+                #else:
+                #    s_next = integrate(dxdt, s_alt, t, dt)
+                s_next = integrate(dxdt, s_alt, t, dt)
 
 
-                s_next = integrate(dxdt, s_alt, t, dt)            
-            
+                #impose constraints on velocity to prevent particle from diverging to infinity
+                #s_next = np.append(np.clip(s_next[0:6], -100, 100), np.clip(s_next[6:12], -10, 10))
+                s_next = np.append(  
+                        np.clip(s_next[0:6], -abs(s[0:6]) - 0.2, abs(s[0:6]) + 0.2), \
+                        np.clip(s_next[6:12], -10, 10)
+                    )
+
+
         #apply update to trajectory vector            
         traj_array[:, i+1] = s_next
 
@@ -645,59 +518,44 @@ if __name__ == '__main__':
     #---------global variables for use in other files-------------#
 
     #calculate_sym_vertices()
-    
-    #print("Preparing Lagrangian...")
-    #xy_coords_list = convert_coords_to_xy()
-    #vertices_list_np = [sym.lambdify(q, expr) for expr in xy_coords_list]
-    #phiq_list_sym = calculate_sym_phiq(xy_coords_list)
-    #lagrangian = compute_lagrangian()
-
-    #print("Generating impact equations...")
-    ##test_gen_impact_updates(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
-    #out = gen_impact_eqns(phiq_list_sym, lagrangian, q, subs_dict) #subs_dict = constants
-
-    calculate_sym_vertices()
-
-    '''
+   
     print("Setting up Euler-Lagrange Eqns and dxdt()...")
-    #F_mat = sym.Matrix([
-    #    sym.symbols(r'F_x'),
-    #    sym.symbols(r'F_y'),
-    #    sym.symbols(r'F_\theta1'),
-    #    sym.symbols(r'F_\theta2'),
-    #    sym.symbols(r'F_\phi1'),
-    #    sym.symbols(r'F_\phi2'),
+
+    #F_eqs_array = np.array([
+    #    #lambda s,t: 0, #F_x
+    #    lambda s,t: -5*s[6], #F_x - damping term applied to vel.
+    #    lambda s,t: 19.62 -10*s[7], #F_y
+    #    lambda s,t: 2*s[8], #F_theta1
+    #    lambda s,t: 2*s[8], #F_theta2
+    #    lambda s,t: 0, #F_phi1
+    #    lambda s,t: 0, #F_phi2
     #])
 
-    #EL_eqns_new = dill_load('../dill/EL_simplified.dill')
-    #t = sym.symbols(r't')
-    #q_ext = sym.Matrix([q, q.diff(t), F_mat])
-    #print(q_ext)
-    #xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
-    #    = construct_dxdt(EL_eqns_new, q_ext)
-
     F_eqs_array = np.array([
-        lambda t: 0, #F_x
-        lambda t: 19.62, #F_y
-        lambda t: 0, #F_theta1
-        lambda t: 0, #F_theta2
-        lambda t: 0, #F_phi1
-        lambda t: 0, #F_phi2
+        #lambda s,t: 0, #F_x
+        lambda s,t: -5*s[6], #F_x - damping term applied to vel.
+        lambda s,t: 19.62 - 10*s[7], #F_y
+        lambda s,t: 0, #F_theta1
+        lambda s,t: 0, #F_theta2
+        lambda s,t: 0, #F_phi1
+        lambda s,t: 0, #F_phi2
     ])
+
+    #exciting theta1 and theta1 at const 2 or 10 doesn't work
 
     dxdt = construct_dxdt(F_eqs_array)
 
     dt = 0.005
-    t_span = [0, 10]
+    t_span = [0, 5]
 
-    #theta0 = np.pi/4
-    #init_posns = [1, 1, theta0, -theta0, np.pi/3, np.pi/2]
+    theta0 = np.pi/4
+    init_posns = [1, 1, theta0, -theta0, 2*np.pi/3, np.pi/4]
+    init_velocities = [0, 0, -1, 1, 6, -4]
+    ICs = init_posns + init_velocities
+    #th0 = 0.2315 #initial theta such that only one vertex is impacting
+    #init_posns = [0,1, th0, -th0, 0, 0]
     #init_velocities = [0, 0, 0, 0, 0, 0]
     #ICs = init_posns + init_velocities
-    th0 = 0.2315 #initial theta such that only one vertex is impacting
-    init_posns = [0,1, th0, -th0, 0, 0]
-    init_velocities = [0, 0, 0, 0, 0, 0]
-    ICs = init_posns + init_velocities
 
 
     print("Preparing numerical impact conditions...")
@@ -705,14 +563,4 @@ if __name__ == '__main__':
     xy_coords_list = convert_coords_to_xy()
     vertices_list_np = [sym.lambdify(q, expr.subs(subs_dict)) for expr in xy_coords_list] #subs_dict =  constants
 
-    #v11x_B2 = vertices_list_np[0]
-    #help(v11x_B2)
-
     simulate_impact(t_span, dt, ICs, rk4, dxdt, impact_condition, impact_update)
-
-    #display these on Jupyter notebook, so we need to save them to file
-    #dill_dump('../dill/phiq_list.dill', phiq_list_sym)
-
-    #print("Sample expression of vertex x coordinate:")           
-    #display(v21x_B1)
-    '''

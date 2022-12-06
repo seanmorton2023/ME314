@@ -214,7 +214,7 @@ def construct_dxdt(f_eqs_array):
 
     def dxdt(t,s):
 
-        F_array = [f(t) for f in f_eqs_array]
+        F_array = [f(s,t) for f in f_eqs_array]
         s_ext = np.append(s, F_array)
         #format of s_ext: 
         #0-5: state values
