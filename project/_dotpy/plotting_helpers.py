@@ -63,14 +63,51 @@ def make_grid(canvas, w, h, interval):
         canvas.create_line(0, i, w, i, tag='grid_line', fill='gray', dash=(2,2))
         make_grid_label(canvas, 0, i, w, h, offset, interval)
 
-    ## Creates axis labels
-    #for y in range(0, h, interval//2):
-        
-        
-    #for x in range(0, w, interval//2):
         
 def make_coordsys(canvas, x, y, line_length, tag):
     canvas.create_line(x, y, x + line_length,               y, arrow=tk.LAST, tag=tag+'x')
     canvas.create_line(x, y,               x, y - line_length, arrow=tk.LAST, tag=tag+'y')
+
+def label_vertices(canvas, box1_vert_gui, box2_vert_gui):
+    '''For debug purposes, put labels on each vertex of the boxes so we can see
+    which impact conditions are occurring at a given point in time.
+
+    Box1_vert_gui and box2_vert_gui are 10x0 flattened arrays, (x1, y1, x2, y2,...)
+    '''
+
+    #remove 5th set of box vertices, as it closes the box structure
+    box1_vert_gui = np.array(box1_vert_gui)[:-2]
+    box2_vert_gui = np.array(box2_vert_gui)[:-2]
+
+    canvas.delete("Vertices")
+    offset = 2
+
+    for i in range(len(box1_vert_gui)//2):
+        x, y = box1_vert_gui[2*i : 2*i + 2]
+        canvas.create_text(
+            x + offset, 
+            y - offset, 
+            text=f"V1{i+1}",
+            anchor="s", 
+            font=("Purisa", 8),
+            tag="Vertices"
+        )
+
+    for i in range(len(box2_vert_gui)//2):
+        x, y = box2_vert_gui[2*i : 2*i + 2]
+        canvas.create_text(
+            x + offset, 
+            y - offset, 
+            text=f"V2{i+1}",
+            anchor="s", 
+            font=("Purisa", 8),
+            tag="Vertices"
+        )
+
+
+
+
+
+
 
 

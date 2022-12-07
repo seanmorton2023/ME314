@@ -7,23 +7,76 @@ import time
 from tqdm import tqdm
 import tkinter as tk
 
-
-#from el_equations import *
-#from impacts import *
-
 from GUI import GUI
 from geometry import *
 from helpers import *
 from plotting_helpers import *
+from el_equations import *
+from impacts import *
+
 
 #framerate_ms = 20 #50fps; round number preferred
-framerate_ms = 100
-#framerate_ms = 20
-
+#framerate_ms = 100
+framerate_ms = 20
 
 #define our sample trajectories for each angle
-dt = 0.01
-t_array = np.arange(0, 10, dt)
+dt = 0.005
+t_span = [0, 5]
+t_array = np.arange(t_span[0], t_span[1], dt)
+
+#define trajectory for particle to follow
+y_tracking = lambda t: 2*(np.cos(1.8*2*np.pi*t) + 1)
+x_tracking = lambda t: 0
+
+#define spring and damping values
+k = 20
+Bx = 2
+By = 5
+
+impact_eqns_0_32 = dill_load('../dill/impact_eqns_0_32.dill')
+atol = 5E-1
+
+#F_eqs_array = np.array([
+#    #lambda s,t: 0, #F_x
+#    lambda s,t: -5*s[6], #F_x - damping term applied to vel.
+#    lambda s,t: 19.62 - 10*s[7], #F_y
+#    lambda s,t: 0, #F_theta1
+#    lambda s,t: 0, #F_theta2
+#    lambda s,t: 0, #F_phi1
+#    lambda s,t: 0, #F_phi2
+#])
+
+#F_eqs_array = np.array([
+#    #lambda s,t: 0, #F_x
+#    lambda s,t: k*(x_tracking(t) - s[0]) - Bx*s[6] , #F_x - damping term applied to vel.
+#    lambda s,t: k*(y_tracking(t) - s[1]) - By*s[7] + 19.62, #F_y
+#    lambda s,t: 0, #F_theta1
+#    lambda s,t: 0, #F_theta2
+#    lambda s,t: 0, #F_phi1
+#    lambda s,t: 0, #F_phi2
+#])
+
+F_eqs_array = np.array([
+    #lambda s,t: 0, #F_x
+    lambda s,t: 0, #F_x - damping term applied to vel.
+    lambda s,t: 20.2, #F_y
+    lambda s,t: 0, #F_theta1
+    lambda s,t: 0, #F_theta2
+    lambda s,t: 0, #F_phi1
+    lambda s,t: 0, #F_phi2
+])
+
+dxdt = construct_dxdt(F_eqs_array)
+
+
+#theta0 = np.pi/2 - 0.2
+theta0 = np.pi/4
+
+init_posns = [0, 1, theta0, -theta0, np.pi/2, np.pi/4]
+init_velocities = [0, 0, -1, 1, 7, -4]
+ICs = init_posns + init_velocities
+
+
 q_array_test = np.array([
     np.zeros(len(t_array)),
     0.5*(np.sin(2 * np.pi * t_array) + 1),
@@ -33,15 +86,16 @@ q_array_test = np.array([
     -2 * np.pi * t_array
 ]).T
 
-#q_array = q_array_test[:]
+q_array = q_array_test[:]
 #q_array = pd.read_csv('../csv/q_array.csv', header=None).to_numpy()
-q_array = pd.read_csv('../csv/q_array_impacts.csv', header=None).to_numpy()
+#q_array = pd.read_csv('../csv/q_array_impacts.csv', header=None).to_numpy()
 
 
 #----------------initialize GUI----------------------#
 gui = GUI(win_height, win_width) #namespace for variables: geometry.py
 gui.load_arrays(q_array, line_coords_mat, vertices_mat)   #geometry.py as well
 gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, framerate_ms)  
+gui.load_simulation(dxdt, t_span, dt, ICs, atol)
 
 #----------------put things on the canvas----------------------#
 
@@ -60,7 +114,9 @@ gui.root.protocol('WM_DELETE_WINDOW', gui.close) #forces closing of all Tk() fun
 print(gui.GsGUI)
 print(np.linalg.inv(gui.GsGUI))
 gui.canvas.pack()
-gui.timer_id = gui.root.after(gui.framerate_ms, gui.on_timer)
+#gui.timer_id = gui.root.after(gui.framerate_ms, gui.on_timer)
+gui.timer_id = gui.root.after(gui.framerate_ms, gui.on_frame_v2)
+
 
 gui.root.mainloop()
 

@@ -3,6 +3,9 @@ import numpy as np
 
 from geometry import *
 from helpers import *
+from impacts import *
+from el_equations import *
+from plotting_helpers import *
 
 #framerate_ms = 20 #50fps; round number preferred
 framerate_ms = 5000 #for debug
@@ -47,6 +50,24 @@ class GUI:
         self.coordsys_len = coordsys_len
         self.GsGUI = GsGUI
         self.framerate_ms = framerate
+
+    def load_simulation(self, dxdt, t_span, dt, ICs, atol):
+
+        #describe variables we're solving for - qd1_tau+, qd2_tau+, ... lambda 
+        sym_t = sym.symbols(r't')
+        qd_q = sym.Matrix([sym.Matrix(q.diff(sym_t)), q])
+        lamb = sym.symbols(r'\lambda')
+        _, _, _, _, _, qd_taup_list = gen_sym_subs(q, qd_q)
+
+        self.sol_vars = qd_taup_list
+        self.sol_vars.append(lamb)
+
+        self.dt = dt
+        self.t_array = np.arange(t_span[0], t_span[1], dt)
+        self.traj_array = np.zeros([len(ICs), len(self.t_array)])
+        self.traj_array[:,0] = ICs
+        self.dxdt = dxdt
+        self.atol = atol
 
     #-----------------------------------#
 
@@ -182,64 +203,7 @@ class GUI:
 
     ###
 
-    def on_timer(self):
-        '''
-        Animation update event, passed to the Tkinter canvas. Uses real-time
-        data so that framerate is consistent.
-        '''
-    
-        #compare current real time to previous
-        elapsed = time.perf_counter() - self.last_frametime
-        elapsed_ms = int(elapsed*1000)
-    
-        #elapsed time is a fraction of the total framerate in ms
-        frame_delay = self.framerate_ms - elapsed_ms
-    
-        #---------------------#
-    
-        #things to be updated on each frame
-        if self.q_ind < len(self.q_array):
-            q = self.q_array[self.q_ind]
-
-            #see function above for how we alter the coords to get them in GUI frame
-            box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
-                self.get_GUI_coords(q)
-    
-        #apply updates to object posns
-        if self.q_ind == 0:
-            #create objects on the canvas
-            linewidth = 2
-            self.canvas.create_line(*box1_vert_gui,    tag='box1',  fill='black', width=linewidth)
-            self.canvas.create_line(*box2_vert_gui,    tag='box2',  fill='black', width=linewidth)
-            self.canvas.create_line(*line1_coords_gui, tag='line1', fill='blue', width=linewidth)
-            self.canvas.create_line(*line2_coords_gui, tag='line2', fill='red', width=linewidth)
-
-        else:
-            #update positions of the objects by tags
-            self.canvas.coords('box1', *box1_vert_gui)
-            self.canvas.coords('box2', *box2_vert_gui)
-            self.canvas.coords('line1', *line1_coords_gui)
-            self.canvas.coords('line2', *line2_coords_gui)
-    
-        #update index of observation for q
-        self.q_ind += 1
-    
-        #---------------------#
-
-        #print("\nGUI debug:")
-        #print(f"q: \n{q}")
-        #print(f"box1_vert_gui: \n{box1_vert_gui}")
-    
-        #update the frame delay of the timer object
-        self.timer_handle = self.root.after(frame_delay, self.on_timer)
-    
-        #update last_frametime for next frame
-        self.last_frametime = time.perf_counter()
-
-    ###
-    
-    #def on_frame_v2(self):
-
+    #def on_timer(self):
     #    '''
     #    Animation update event, passed to the Tkinter canvas. Uses real-time
     #    data so that framerate is consistent.
@@ -256,47 +220,11 @@ class GUI:
     
     #    #things to be updated on each frame
     #    if self.q_ind < len(self.q_array):
-
-    #        #get current value of s
-    #        t = self.t_array[q_ind]
-    #        s = self.traj_array[:,q_ind]
-
-    #        #calculate s for next timestep
-    #        s_next = integrate(self.dxdt, s, t, self.dt)
-
-    #        #check if impact has occurred
-    #        impact_occurred, impact_indices = impact_condition(s_next[0:6])
-        
-    #        if (impact_occurred):
-    #            '''This is designed to alter the velocity of the particle
-    #            just before impact. If we applied the impact update after impact
-    #            (same position, changed velocity), there's a chance the objects 
-    #            would stay stuck inside each other.
-    #            ''' 
-            
-    #            #find phi(q) we can apply to the system. choose one to apply
-    #            any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], self.atol)
-    #            valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
-            
-    #            #this is a case I eventually want to figure out
-    #            if len(valid_phiq_indices) == 0:
-    #                print("Invalid phi(q)/impact condition combination") #throw an error in the future
-    #            else:
-    #                #index = valid_phiq_indices[0]
-    #                #impact_eqs = impact_eqns_0_32[index]
-    #                impact_eqs = impact_eqns_0_32[argmin]
-
-    #                #solve for next state, using numerical nsolve() on symbolic expressions
-    #                s_alt = impact_update(s_next, impact_eqs, sol_vars)
-    #                s_next = integrate(dxdt, s_alt, t, dt)            
-         
-
-    #        #apply update to trajectory vector            
-    #        self.traj_array[:, q_ind+1] = s_next
+    #        q = self.q_array[self.q_ind]
 
     #        #see function above for how we alter the coords to get them in GUI frame
     #        box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
-    #            self.get_GUI_coords(s)
+    #            self.get_GUI_coords(q)
     
     #    #apply updates to object posns
     #    if self.q_ind == 0:
@@ -318,10 +246,109 @@ class GUI:
     #    self.q_ind += 1
     
     #    #---------------------#
+
+    #    #print("\nGUI debug:")
+    #    #print(f"q: \n{q}")
+    #    #print(f"box1_vert_gui: \n{box1_vert_gui}")
     
     #    #update the frame delay of the timer object
     #    self.timer_handle = self.root.after(frame_delay, self.on_timer)
     
     #    #update last_frametime for next frame
     #    self.last_frametime = time.perf_counter()
+
+    ####
+    
+    def on_frame_v2(self):
+
+        '''
+        Animation update event, passed to the Tkinter canvas. Uses real-time
+        data so that framerate is consistent.
+        '''
+    
+        #compare current real time to previous
+        elapsed = time.perf_counter() - self.last_frametime
+        elapsed_ms = int(elapsed*1000)
+    
+        #elapsed time is a fraction of the total framerate in ms
+        frame_delay = self.framerate_ms - elapsed_ms
+    
+        #---------------------#
+    
+        #things to be updated on each frame
+        if self.q_ind < len(self.q_array):
+
+            #get current value of s
+            t = self.t_array[self.q_ind]
+            s = self.traj_array[:,self.q_ind]
+
+            #calculate s for next timestep
+            s_next = rk4(self.dxdt, s, t, self.dt)
+
+            #check if impact has occurred
+            impact_occurred, impact_indices = impact_condition(s_next[0:6])
+        
+            if (impact_occurred):
+                '''This is designed to alter the velocity of the particle
+                just before impact. If we applied the impact update after impact
+                (same position, changed velocity), there's a chance the objects 
+                would stay stuck inside each other.
+                ''' 
+            
+                #find phi(q) we can apply to the system. choose one to apply
+                any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], self.atol)
+                valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
+            
+                #this is a case I eventually want to figure out
+                if len(valid_phiq_indices) == 0:
+                    print("Invalid phi(q)/impact condition combination") #throw an error in the future
+                else:
+                    #index = valid_phiq_indices[0]
+                    #impact_eqs = impact_eqns_0_32[index]
+                    impact_eqs = impact_eqns_0_32[argmin]
+
+                    #solve for next state, using numerical nsolve() on symbolic expressions
+                    s_alt = impact_update(s_next, impact_eqs, self.sol_vars)
+                    s_next = rk4(self.dxdt, s_alt, t, self.dt)            
+         
+                    #s_next = np.append(  
+                    #    np.clip(s_next[0:6], -abs(s[0:6]) - 0.2, abs(s[0:6]) + 0.2), \
+                    #    np.clip(s_next[6:12], -10, 10)
+                    #)
+                    #s_next = np.append(s[0:6], np.clip(s_next[6:12], -10, 10))
+
+            #apply update to trajectory vector            
+            self.traj_array[:, self.q_ind+1] = s_next
+
+            #see function above for how we alter the coords to get them in GUI frame
+            box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
+                self.get_GUI_coords(s)
+    
+        #apply updates to object posns
+        if self.q_ind == 0:
+            #create objects on the canvas
+            linewidth = 2
+            self.canvas.create_line(*box1_vert_gui,    tag='box1',  fill='black', width=linewidth)
+            self.canvas.create_line(*box2_vert_gui,    tag='box2',  fill='black', width=linewidth)
+            self.canvas.create_line(*line1_coords_gui, tag='line1', fill='blue', width=linewidth)
+            self.canvas.create_line(*line2_coords_gui, tag='line2', fill='red', width=linewidth)
+
+        else:
+            #update positions of the objects by tags
+            self.canvas.coords('box1', *box1_vert_gui)
+            self.canvas.coords('box2', *box2_vert_gui)
+            self.canvas.coords('line1', *line1_coords_gui)
+            self.canvas.coords('line2', *line2_coords_gui)
+    
+        label_vertices(self.canvas, box1_vert_gui, box2_vert_gui)
+        #update index of observation for q
+        self.q_ind += 1
+    
+        #---------------------#
+    
+        #update the frame delay of the timer object
+        self.timer_handle = self.root.after(frame_delay, self.on_frame_v2)
+    
+        #update last_frametime for next frame
+        self.last_frametime = time.perf_counter()
         

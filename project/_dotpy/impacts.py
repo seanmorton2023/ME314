@@ -395,7 +395,7 @@ def impact_update(s, impact_eqs, sol_vars):
         except Exception as e:
             print(f"Nsolve threw an error: {e}")
         #init_guess = -1.5*init_guess
-        init_guess = -0.5*init_guess
+        init_guess = -1.5*init_guess
 
 
     #I'm gonna assume order of dict values stays as qd_tau1+, qd_tau2+, ... qd_tau6+ but
@@ -510,6 +510,13 @@ def simulate_impact(t_span, dt, ICs, integrate, dxdt, impact_condition, impact_u
     #save results to a CSV file for use in animation. This needs to be removed before submission.
     pd.DataFrame(traj_array.T).to_csv('../csv/q_array_impacts.csv', header=None, index=None)
     return traj_array
+
+
+##SOME GLOBAL VARIABLES
+xy_coords_list = convert_coords_to_xy()
+vertices_list_np = [sym.lambdify(q, expr.subs(subs_dict)) for expr in xy_coords_list] #subs_dict =  constants
+impact_eqns_0_32 = dill_load('../dill/impact_eqns_0_32.dill')
+lamb = sym.symbols(r'\lambda')
 
 
 #things to only be calculated here
