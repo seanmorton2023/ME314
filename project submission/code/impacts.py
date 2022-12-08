@@ -401,7 +401,7 @@ def impact_update(s, impact_eqs, sol_vars):
 
     #code is based on Jake's code from discussion page
     #would be great if I could log the impacts separately and maintain tqdm running
-    attempts = 10
+    attempts = 3
     init_guess = -1 * np.append(s[6:12],[0])
     solns_list = [0]*attempts
     lamb_val_arr = np.zeros(10)
@@ -421,10 +421,6 @@ def impact_update(s, impact_eqs, sol_vars):
         #    print(f"Solution selected: lambda = {soln[lamb]}")
 
         #    break       
-        if i >= 5:
-            ind = np.argmax(abs(lamb_val_arr))
-            soln = solns_list[ind]
-            lamb_val = lamb_val_arr[ind]
             #print(f"\nSolution selected: lambda = {soln[lamb]}")
 
     
@@ -433,8 +429,12 @@ def impact_update(s, impact_eqs, sol_vars):
         #init_guess = -0.5*init_guess
         init_guess = -1.5*init_guess
 
-    print("\nArray of solns:")
-    print(solns_list)
+    ind = np.argmax(abs(lamb_val_arr))
+    soln = solns_list[ind]
+    lamb_val = lamb_val_arr[ind]
+
+    #print("\nArray of solns:")
+    #print(solns_list)
     #I'm gonna assume order of dict values stays as qd_tau1+, qd_tau2+, ... qd_tau6+ but
     #this may be something to debug if my impacts look weird
     if soln:

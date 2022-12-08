@@ -148,31 +148,6 @@ def compute_solve_EL(F_mat):
 
     return eqns_new
 
-    #print("KE of body 1:")
-    ##display(KE_B1)
-
-    #print("KE of body 2:")
-    ##display(KE_B2)
-    #print("Lagrangian:")
-    ##display(lagrangian)
-    #print("Simplified:")
-    ##display(lagrangian_disp)
-
-    #print("Euler-Lagrange equations:")
-    ##display(total_eq)
-    #print("Variables to solve for (transposed):")
-    ##display(qdd.T)
-    #display(total_eq_simpl)
-    #display(total_eq_rounded)
-
-    #for eq in eqns_solved:
-    #    #display(eq)
-    #for eq in eqns_new:
-    #    #display(eq)
-
-    #pickle the output of this constrained Euler-Lagrange derivation
-    pass
-
 def construct_dxdt(f_eqs_array):
     '''Generates our dynamics function dxdt() using the
     second-derivative equations derived from the Euler-Lagrange
@@ -316,20 +291,7 @@ def plot_results():
 
 if __name__ == '__main__':
 
-    #F_mat = sym.Matrix([
-    #    sym.symbols(r'F_x'),
-    #    sym.symbols(r'F_y'),
-    #    sym.symbols(r'F_\theta1'),
-    #    sym.symbols(r'F_\theta2'),
-    #    sym.symbols(r'F_\phi1'),
-    #    sym.symbols(r'F_\phi2'),
-    #])
 
-    #eqns_new = dill_load('../dill/EL_simplified.dill')
-    #q_ext = sym.Matrix([q, q.diff(t), F_mat])
-    #xdd_np, ydd_np, theta1dd_np, theta2dd_np, phi1dd_np, phi2dd_np \
-    #    = construct_dxdt(eqns_new, q_ext)
-    #dxdt = construct_dxdt(eqns_new, q_ext)
     F_eqs_array = np.array([
         lambda t: 0, #F_x
         lambda t: 19.62, #F_y
@@ -340,7 +302,6 @@ if __name__ == '__main__':
     ])
 
     dxdt = construct_dxdt(F_eqs_array)
-
 
     ##for Lagrangian debug - save and then load into Jupyter NB
     #lagrangian = compute_lagrangian()

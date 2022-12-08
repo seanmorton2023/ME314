@@ -33,6 +33,7 @@ class GUI:
         self.timer_handle = None #set this from the outside once canvas is packed
         self.last_frametime = 0
         self.q_ind = 0
+        self.impact_photoID = None
 
     ###
 
@@ -44,12 +45,15 @@ class GUI:
         self.line_coords_mat = line_coords_mat
         self.vertices_mat    = vertices_mat
 
-    def load_gui_params(self, L, w, coordsys_len, GsGUI, framerate):
+    def load_gui_params(self, L, w, coordsys_len, GsGUI, framerate, photo_filepath):
         self.L = L
         self.w = w
         self.coordsys_len = coordsys_len
         self.GsGUI = GsGUI
         self.framerate_ms = framerate
+        self.impact_photoID = draw_image(self.canvas, self.root, \
+            (self.win_width//2, self.win_height//2), photo_filepath, size=0,
+                  tags='sparks', state='hidden')
 
     def load_simulation(self, dxdt, t_span, dt, ICs, atol):
 
@@ -303,6 +307,9 @@ class GUI:
             #    s = s_next
             #    #s = self.traj_array[:,self.q_ind-2]
 
+            #GUI plotting variables
+            box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
+                self.get_GUI_coords(s)
         
             if (impact_dt):
                 '''This is designed to alter the velocity of the particle
@@ -321,6 +328,22 @@ class GUI:
                 if len(valid_phiq_indices) == 0:
                     print("Invalid phi(q)/impact condition combination") #throw an error in the future
                 else:
+
+
+                    #for fun: 
+                    body_num = (argmin//16)+1
+                    vertex_ind = (argmin%16)//4
+                    if body_num == 1:
+                        sparks_coords = box1_vert_gui[2*vertex_ind : 2*vertex_ind + 2]
+                    elif body_num == 2:
+                        sparks_coords = box2_vert_gui[2*vertex_ind : 2*vertex_ind + 2]
+                    else:
+                        raise Exception("You calculated wrong")
+
+                    self.canvas.coords('sparks', *sparks_coords)
+                    make_visible(self.canvas, self.impact_photoID)
+                    self.root.update_idletasks()
+
                     #index = valid_phiq_indices[0]
                     #impact_eqs = impact_eqns_0_32[index]
                     impact_eqs = impact_eqns_0_32[argmin]
@@ -339,13 +362,18 @@ class GUI:
 
             #apply update to trajectory vector            
             self.traj_array[:, self.q_ind+1] = s_next
-
-            #see function above for how we alter the coords to get them in GUI frame
-            box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
-                self.get_GUI_coords(s)
+            prev_impact = impact_dt
     
             #print("Press any key to continue simulation. ")
             #input()
+
+        #------------------GUI UPDATES------------------------#
+
+        ##sparks sprite
+        #if (impact_dt):
+
+        if prev_impact:
+            make_invisible(self.canvas, self.impact_photoID)
 
         #apply updates to object posns
         if self.q_ind == 0:

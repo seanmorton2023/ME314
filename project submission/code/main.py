@@ -42,15 +42,6 @@ By = 5
 impact_eqns_0_32 = dill_load('../dill/impact_eqns_0_32.dill')
 atol = 1E-1
 
-#F_eqs_array = np.array([
-#    #lambda s,t: 0, #F_x
-#    lambda s,t: -5*s[6], #F_x - damping term applied to vel.
-#    lambda s,t: 19.62 - 10*s[7], #F_y
-#    lambda s,t: 0, #F_theta1
-#    lambda s,t: 0, #F_theta2
-#    lambda s,t: 0, #F_phi1
-#    lambda s,t: 0, #F_phi2
-#])
 
 F_eqs_array = np.array([
     #lambda s,t: 0, #F_x
@@ -66,16 +57,6 @@ F_eqs_array = np.array([
 #    #lambda s,t: 0, #F_x
 #    lambda s,t: k*(x_tracking(t) - s[0]), #F_x - damping term applied to vel.
 #    lambda s,t: k*(y_tracking(t) - s[1]) + 19.62, #F_y
-#    lambda s,t: 0, #F_theta1
-#    lambda s,t: 0, #F_theta2
-#    lambda s,t: 0, #F_phi1
-#    lambda s,t: 0, #F_phi2
-#])
-
-#F_eqs_array = np.array([
-#    #lambda s,t: 0, #F_x
-#    lambda s,t: 0, #F_x - damping term applied to vel.
-#    lambda s,t: 20.2, #F_y
 #    lambda s,t: 0, #F_theta1
 #    lambda s,t: 0, #F_theta2
 #    lambda s,t: 0, #F_phi1
@@ -112,7 +93,8 @@ q_array = q_array_test[:]
 #----------------initialize GUI----------------------#
 gui = GUI(win_height, win_width) #namespace for variables: geometry.py
 gui.load_arrays(q_array, line_coords_mat, vertices_mat)   #geometry.py as well
-gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, framerate_ms)  
+gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, 
+                    framerate_ms, '../sprites/impact_sparks.png') #plotting_helpers.py
 gui.load_simulation(dxdt, t_span, dt, ICs, atol)
 
 #----------------put things on the canvas----------------------#

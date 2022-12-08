@@ -2,6 +2,8 @@
 import tkinter as tk
 import time
 import numpy as np
+from PIL import Image, ImageTk
+import os
 
 from helpers import *
 from geometry import *
@@ -62,7 +64,6 @@ def make_grid(canvas, w, h, interval):
     for i in np.linspace(0, h, 2*h//interval+1).tolist()[:-1]:
         canvas.create_line(0, i, w, i, tag='grid_line', fill='gray', dash=(2,2))
         make_grid_label(canvas, 0, i, w, h, offset, interval)
-
         
 def make_coordsys(canvas, x, y, line_length, tag):
     canvas.create_line(x, y, x + line_length,               y, arrow=tk.LAST, tag=tag+'x')
@@ -104,7 +105,66 @@ def label_vertices(canvas, box1_vert_gui, box2_vert_gui):
             tag="Vertices"
         )
 
+def make_invisible(canvas,id):
+    canvas.itemconfigure(id, state='hidden')
 
+def make_visible(canvas,id):
+    canvas.itemconfigure(id, state='normal')
+
+def draw_image(canvas:tk.Canvas, gui, center:tuple, file_path:str, size:int=0,
+                  tags:str=None,state='normal'):
+    '''
+    Makes an image onto the TKinter canvas. Uses a file located at file_path
+    relative to the current code.
+
+    Args:
+        canvas(TK): the TKinter canvas for displaying images
+        gui (TK root/master): necessary for stability when importing 'helpers' into 'main'
+        center(Tuple): the location of the center of the image
+        file_path(Str): the path of the .PNG you want to paste onto the Tkinter
+                canvas. can include folder as well
+        size(Int) - optional: the size you want to assign to the image. if size="0", as
+                set by default, the image won't be resized from default
+        tags(Str) - optional: the identifying word to use in order to group
+                and move around an image of a certain type
+        state(Str) - optional: used to turn a tagged image from visible
+                (the 'normal' state) to invisible (state='hidden')
+
+    Returns:
+        the ID for the image; position and visibility can be modified
+    '''
+
+    # adds folder directory to path
+    directory = os.path.dirname(os.path.realpath(__file__))       
+    file_path = os.path.join(directory, file_path)
+    image = Image.open(file_path)
+
+    # finds default width and height of png
+
+    default_height = image.size[1]
+    default_width = image.size[0]
+
+    # changes height of image if needed. an input of '0' will tell the
+    # program that the user wants to use the default height.
+
+    if size != 0:
+        # "size" input will become the new height       
+        size_ratio = size/default_height
+        height = size
+        width = int(round(default_width * size_ratio))
+
+        # antialiasing necessary to keep edges of image smooth when scaling
+        image = image.resize((width,height), Image.ANTIALIAS)
+
+    # turns the file name into a tkinter Photo Image using PIL
+    photo_image = ImageTk.PhotoImage(image)
+    
+    # to keep the image on the screen
+    label = tk.Label(gui, image=photo_image)
+    label.image = photo_image
+
+    ID = canvas.create_image(center, image = photo_image, tags=tags,state=state)
+    return ID
 
 
 
