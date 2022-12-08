@@ -29,11 +29,11 @@ subs_dict = {
 }
 
 #make sure geometry for plotting matches 
-#the variables for the E-L equations!
+#the Sympy substitution dict!
 L_num = 1
 w_num = 1/6.0
 
-#---------------right side---------------#
+#--------symbolic transformation matrices, right side---------------#
 
 Rab = sym.Matrix([
     [sym.cos(theta2), -sym.sin(theta2), 0],
@@ -59,7 +59,7 @@ Gsd = Gsb @ Gbd
 GsB2 = Gsd @ GdB2 #formerly Gsf
 
 
-#---------------left side---------------#
+#--------symbolic transformation matrices, left side---------------#
 
 Rac = sym.Matrix([
     [sym.cos(theta1), -sym.sin(theta1), 0],
@@ -84,7 +84,8 @@ Gsc = Gsa @ Gac
 Gse = Gsc @ Gce
 GsB1 = Gse @ GeB1 #formerly Gsg
 
-#-------------------------------------#
+
+#------------line + box geometry; plotting geometry-------------------#
 
 #Lnum and wnum defined under subs_dict
 
@@ -93,22 +94,6 @@ win_width = 800
 pixels_to_unit = 200
 coordsys_len = 50
 
-#vertices_mat = w_num * np.array([
-#    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #1/... term ensures last translation term is 1
-#    [-np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num],
-#    [-np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
-#    [ np.sqrt(2)/2, -np.sqrt(2)/2, 0, 1/w_num],
-#    [ np.sqrt(2)/2,  np.sqrt(2)/2, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
-#]).T #in "bar" form  so they can be multiplied by trans. matrix
-
-#vertices_mat = w_num * np.array([
-#    [ 1/2.0,  1/2.0, 0, 1/w_num], #1/... term ensures last translation term is 1
-#    [-1/2.0,  1/2.0, 0, 1/w_num],
-#    [-1/2.0, -1/2.0, 0, 1/w_num],
-#    [ 1/2.0, -1/2.0, 0, 1/w_num],
-#    [ 1/2.0,  1/2.0, 0, 1/w_num], #add first vertex onto end of matrix again so line wraps around
-#]).T #in "bar" form  so they can be multiplied by trans. matrix
-
 vertices_mat = np.array([
     [ w_num/2.0,  w_num/2.0, 0, 1], 
     [-w_num/2.0,  w_num/2.0, 0, 1],
@@ -116,8 +101,6 @@ vertices_mat = np.array([
     [ w_num/2.0, -w_num/2.0, 0, 1],
     [ w_num/2.0,  w_num/2.0, 0, 1], #add first vertex onto end of matrix again so line wraps around
 ]).T #in "bar" form  so they can be multiplied by trans. matrix
-
-
 
 line_coords_mat = np.array([
     [0,     0, 0, 1],
