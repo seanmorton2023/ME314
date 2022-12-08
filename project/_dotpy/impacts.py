@@ -125,21 +125,39 @@ def impact_condition(s):
     impact_met = np.any(impact_conds)
     impact_indices = np.nonzero(impact_conds)[0].tolist() #indices where true
     
-    if impact_met:
-        #print("\nImpact condition debug:")
-        ##print("V11x, V11y, V21x, and V21y values:")
-        #print("V12x, V12y, V21x, and V21y values:")
-        #print(v12x_B2_np(*s))
-        #print(v12y_B2_np(*s))
-        #print(v21x_B1_np(*s))
-        #print(v21y_B1_np(*s))
+    #print("Impact condition debug:")
 
-        #print("\nV11x, V11y, V22x, and V22y values:")
-        #print(v11x_B2_np(*s))
-        #print(v11y_B2_np(*s))
-        #print(v22x_B1_np(*s))
-        #print(v22y_B1_np(*s))
-        pass
+    #vertex_posn_values = np.array([
+    #    v11x_B2_np(*s), v11y_B2_np(*s),
+    #    v12x_B2_np(*s), v12y_B2_np(*s),
+    #    v13x_B2_np(*s), v13y_B2_np(*s),
+    #    v14x_B2_np(*s), v14y_B2_np(*s),
+        
+    #    v21x_B1_np(*s), v21y_B1_np(*s),
+    #    v22x_B1_np(*s), v22y_B1_np(*s),
+    #    v23x_B1_np(*s), v23y_B1_np(*s),
+    #    v24x_B1_np(*s), v24y_B1_np(*s),     
+    #])
+
+    #print(f"Boundary for impact detection: {bound}")
+    #for i in range(len(vertex_posn_values)//2):
+    #    print(f"Vertex V{(i//4)+1}{(i%4)+1} x,y values: {round(vertex_posn_values[2*i],3)}  {round(vertex_posn_values[(2*i)+1],3)}")
+
+    #if impact_met:
+    #    #print("\nImpact condition debug:")
+    #    ##print("V11x, V11y, V21x, and V21y values:")
+    #    #print("V12x, V12y, V21x, and V21y values:")
+    #    #print(v12x_B2_np(*s))
+    #    #print(v12y_B2_np(*s))
+    #    #print(v21x_B1_np(*s))
+    #    #print(v21y_B1_np(*s))
+
+    #    #print("\nV11x, V11y, V22x, and V22y values:")
+    #    #print(v11x_B2_np(*s))
+    #    #print(v11y_B2_np(*s))
+    #    #print(v22x_B1_np(*s))
+    #    #print(v22y_B1_np(*s))
+    #    pass
 
     return impact_met, impact_indices
 
@@ -212,11 +230,14 @@ def filter_phiq(impact_indices, phi_indices, phi_arr_np):
     
     #find location of min valid phi(q)
     valid_phiq = phi_arr_np[valid_phiq_indices]
-    argmin = valid_phiq_indices[np.argmin(valid_phiq)]
+    argmin = valid_phiq_indices[np.argmin(abs(valid_phiq))]
 
     #print("\nFilter_Phiq debug:")
-    #print(f"\nImpact_indices: \n{impact_indices}")
-    #print(f"\nPhi_indices: \n{phi_indices}")
+    print(f"Impact_indices: {impact_indices}")
+    print(f"Phi_indices: {phi_indices}")
+    print(f"\nphi_arr_np: \n{phi_arr_np}")
+    print(f"Valid_phiq_indices: {valid_phiq_indices}")
+    print(f"Argmin: {argmin}")
 
     #returns the phi(q) equations that both evaluate to ~0 and
     #are related to an impact condition that has been met.
@@ -373,8 +394,6 @@ def impact_update(s, impact_eqs, sol_vars):
                          **{sym.symbols(f"qd_{i+1}^-") : s[i+6] for i in range(6)}}
     impact_eqs_curr = impact_eqs.subs(curr_state_subs)
 
-    attempts = 10
-    init_guess = -1 * np.append(s[6:12],[0])
 
     #print("\nImpact update debug:")
     #print(f"State s, 6-12: {s[6:12]}")
@@ -382,22 +401,40 @@ def impact_update(s, impact_eqs, sol_vars):
 
     #code is based on Jake's code from discussion page
     #would be great if I could log the impacts separately and maintain tqdm running
+    attempts = 10
+    init_guess = -1 * np.append(s[6:12],[0])
+    solns_list = [0]*attempts
+    lamb_val_arr = np.zeros(10)
     soln = None
+
     for i in range(attempts):
-        try:
-            curr_soln = sym.nsolve(impact_eqs_curr, sol_vars, init_guess, dict = True, verify = False)[0]
-            #print(curr_soln)
-            if abs(curr_soln[lamb]) > 1e-9:
-                #print("Found soln")
-                soln = curr_soln
-                break         
+        #try:
+        curr_soln = sym.nsolve(impact_eqs_curr, sol_vars, init_guess, dict = True, verify = False)[0]
+        solns_list[i] = curr_soln
+        lamb_val_arr[i] = curr_soln[lamb]
+
+        #print(f"Iteration {i}: lambda {curr_soln[lamb]}")
+        #print(curr_soln)
+        #if abs(curr_soln[lamb]) > 1e-9:
+        #    #print(curr_soln)
+        #    soln = curr_soln
+        #    print(f"Solution selected: lambda = {soln[lamb]}")
+
+        #    break       
+        if i >= 5:
+            ind = np.argmax(abs(lamb_val_arr))
+            soln = solns_list[ind]
+            lamb_val = lamb_val_arr[ind]
+            #print(f"\nSolution selected: lambda = {soln[lamb]}")
+
     
-        except Exception as e:
-            print(f"Nsolve threw an error: {e}")
-        #init_guess = -1.5*init_guess
+        #except Exception as e:
+        #    print(f"Nsolve threw an error: {e}")
+        #init_guess = -0.5*init_guess
         init_guess = -1.5*init_guess
 
-
+    print("\nArray of solns:")
+    print(solns_list)
     #I'm gonna assume order of dict values stays as qd_tau1+, qd_tau2+, ... qd_tau6+ but
     #this may be something to debug if my impacts look weird
     if soln:
@@ -448,64 +485,79 @@ def simulate_impact(t_span, dt, ICs, integrate, dxdt, impact_condition, impact_u
     sol_vars = qd_taup_list
     sol_vars.append(lamb)
 
-    t_array = np.arange(t_span[0], t_span[1], dt)
-    traj_array = np.zeros([len(ICs), len(t_array)])
-    traj_array[:,0] = ICs
+    #t_array = np.arange(t_span[0], t_span[1], dt)
+    #traj_array = np.zeros([len(ICs), len(t_array)])
+    #traj_array[:,0] = ICs
 
-    print("Simulating system with impacts...")
-    for i in tqdm(range(len(t_array) - 1)):
+    #print("Simulating system with impacts...")
+    #for i in tqdm(range(len(t_array) - 1)):
     
-        #get current value of s
-        t = t_array[i]
-        s = traj_array[:,i]
+    #    #get current value of s
+    #    t = t_array[i]
+    #    s = traj_array[:,i]
 
-        #calculate s for next timestep
-        s_next = integrate(dxdt, s, t, dt)
+    #    #calculate s for next timestep
+    #    s_next = integrate(dxdt, s, t, dt)
+    #    s_twodt = integrate(dxdt, s_next, t+dt, dt)
+    #    s_check = s_next[:]
 
-        #check if impact has occurred
-        impact_occurred, impact_indices = impact_condition(s_next[0:6])
-        
-        if (impact_occurred):
-            '''This is designed to alter the velocity of the particle
-            just before impact. If we applied the impact update after impact
-            (same position, changed velocity), there's a chance the objects 
-            would stay stuck inside each other.
-            ''' 
+    #    #check if impact has occurred, either at curr. timestep or 2 timesteps from now
+    #    impact_dt,    impact_indices       = impact_condition(s_next[0:6])
+    #    impact_twodt, impact_indices_twodt = impact_condition(s_twodt[0:6])
+
+    #    ##if system impacts two timesteps from now, apply the impact update using
+    #    ##that data.
+    #    if impact_twodt and not impact_dt:
+    #        impact_dt = impact_twodt
+    #        impact_indices = impact_indices_twodt[:]
+    #        s_check = s_twodt[:]
+
+
+    #    if (impact_dt):
+    #        '''This is designed to alter the velocity of the particle
+    #        just before impact. If we applied the impact update after impact
+    #        (same position, changed velocity), there's a chance the objects 
+    #        would stay stuck inside each other.
+    #        ''' 
             
-            #find phi(q) we can apply to the system. choose one to apply
-            any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], atol)
-            valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
+    #        #find phi(q) we can apply to the system. choose one to apply
+    #        #any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], atol)
+    #        any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_check[0:6], atol)
+
+    #        valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
             
-            #this is a case I eventually want to figure out
-            if len(valid_phiq_indices) == 0:
-                print("Invalid phi(q)/impact condition combination") #throw an error in the future
-            else:
-                #index = valid_phiq_indices[0]
-                #impact_eqs = impact_eqns_0_32[index]
-                impact_eqs = impact_eqns_0_32[argmin]
+    #        #this is a case I eventually want to figure out
+    #        if len(valid_phiq_indices) == 0:
+    #            print("Invalid phi(q)/impact condition combination") #throw an error in the future
+    #        else:
+    #            #index = valid_phiq_indices[0]
+    #            #impact_eqs = impact_eqns_0_32[index]
+    #            impact_eqs = impact_eqns_0_32[argmin]
 
-                #solve for next state, using numerical nsolve() on symbolic expressions
-                s_alt = impact_update(s_next, impact_eqs, sol_vars)
-
-                #if particle is still inside block at next timestep, integrate for 2dt
-                #impact_next, _ = impact_condition(s_alt[0:6])
-                #if impact_next:    
-                #    s_next = integrate(dxdt, s_alt, t, 2*dt)
-                #else:
-                #    s_next = integrate(dxdt, s_alt, t, dt)
-                s_next = integrate(dxdt, s_alt, t, dt)
+    #            #solve for next state, using numerical nsolve() on symbolic expressions
+    #            #s_alt = impact_update(s_next, impact_eqs, sol_vars)
+    #            s_alt = impact_update(s, impact_eqs, sol_vars)
 
 
-                #impose constraints on velocity to prevent particle from diverging to infinity
-                #s_next = np.append(np.clip(s_next[0:6], -100, 100), np.clip(s_next[6:12], -10, 10))
-                s_next = np.append(  
-                        np.clip(s_next[0:6], -abs(s[0:6]) - 0.2, abs(s[0:6]) + 0.2), \
-                        np.clip(s_next[6:12], -10, 10)
-                    )
+    #            #if particle is still inside block at next timestep, integrate for 2dt
+    #            #impact_next, _ = impact_condition(s_alt[0:6])
+    #            #if impact_next:    
+    #            #    s_next = integrate(dxdt, s_alt, t, 2*dt)
+    #            #else:
+    #            #    s_next = integrate(dxdt, s_alt, t, dt)
+    #            s_next = integrate(dxdt, s_alt, t, dt)
 
 
-        #apply update to trajectory vector            
-        traj_array[:, i+1] = s_next
+    #            #impose constraints on velocity to prevent particle from diverging to infinity
+    #            #s_next = np.append(np.clip(s_next[0:6], -100, 100), np.clip(s_next[6:12], -10, 10))
+    #            s_next = np.append(  
+    #                    np.clip(s_next[0:6], -abs(s[0:6]) - 0.2, abs(s[0:6]) + 0.2), \
+    #                    np.clip(s_next[6:12], -10, 10)
+    #                )
+
+
+    #    #apply update to trajectory vector            
+    #    traj_array[:, i+1] = s_next
 
     #save results to a CSV file for use in animation. This needs to be removed before submission.
     pd.DataFrame(traj_array.T).to_csv('../csv/q_array_impacts.csv', header=None, index=None)

@@ -260,10 +260,9 @@ class GUI:
     ####
     
     def on_frame_v2(self):
-
-        '''
-        Animation update event, passed to the Tkinter canvas. Uses real-time
-        data so that framerate is consistent.
+        ''' Animation update event, passed to the Tkinter canvas. Uses real-time
+        data being collected and processed using the dxdt() function and the impact
+        handling functions.
         '''
     
         #compare current real time to previous
@@ -284,11 +283,28 @@ class GUI:
 
             #calculate s for next timestep
             s_next = rk4(self.dxdt, s, t, self.dt)
+            s_twodt = rk4(self.dxdt, s_next, t+self.dt, self.dt)
+            s_check = s_next[:]
 
             #check if impact has occurred
-            impact_occurred, impact_indices = impact_condition(s_next[0:6])
+            #impact_occurred, impact_indices = impact_condition(s_next[0:6])
+
+            #check if impact has occurred, either at curr. timestep or 2 timesteps from now
+            impact_dt,    impact_indices       = impact_condition(s_next[0:6])
+            impact_twodt, impact_indices_twodt = impact_condition(s_twodt[0:6])
+
+            ###if system impacts two timesteps from now, apply the impact update using
+            ###that data.
+            #if impact_twodt and not impact_dt:
+            #    #print("Impact two timesteps from now")
+            #    impact_dt = impact_twodt
+            #    impact_indices = impact_indices_twodt[:]
+            #    s_check = s_twodt[:]
+            #    s = s_next
+            #    #s = self.traj_array[:,self.q_ind-2]
+
         
-            if (impact_occurred):
+            if (impact_dt):
                 '''This is designed to alter the velocity of the particle
                 just before impact. If we applied the impact update after impact
                 (same position, changed velocity), there's a chance the objects 
@@ -296,7 +312,9 @@ class GUI:
                 ''' 
             
                 #find phi(q) we can apply to the system. choose one to apply
-                any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], self.atol)
+                #any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_next[0:6], self.atol)
+                any_nearzero, phi_indices, phi_arr_np = phi_nearzero(s_check[0:6], self.atol)
+
                 valid_phiq_indices, argmin = filter_phiq(impact_indices, phi_indices, phi_arr_np)
             
                 #this is a case I eventually want to figure out
@@ -308,7 +326,9 @@ class GUI:
                     impact_eqs = impact_eqns_0_32[argmin]
 
                     #solve for next state, using numerical nsolve() on symbolic expressions
-                    s_alt = impact_update(s_next, impact_eqs, self.sol_vars)
+                    #s_alt = impact_update(s_next, impact_eqs, self.sol_vars)
+                    s_alt = impact_update(s, impact_eqs, self.sol_vars)
+
                     s_next = rk4(self.dxdt, s_alt, t, self.dt)            
          
                     #s_next = np.append(  
@@ -324,6 +344,9 @@ class GUI:
             box1_vert_gui, box2_vert_gui, line1_coords_gui, line2_coords_gui = \
                 self.get_GUI_coords(s)
     
+            #print("Press any key to continue simulation. ")
+            #input()
+
         #apply updates to object posns
         if self.q_ind == 0:
             #create objects on the canvas
