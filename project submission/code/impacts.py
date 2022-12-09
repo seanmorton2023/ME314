@@ -4,7 +4,6 @@ import pandas as pd
 
 import dill
 import time
-from datetime import datetime
 from tqdm import tqdm
 
 from geometry import *
@@ -111,8 +110,9 @@ def impact_condition(s):
     v23x_B1_np, v23y_B1_np, v24x_B1_np, v24y_B1_np  = vertices_list_np
     
     #define tolerance for impact condition
-    ctol = 1/24.0 #proportional to w/2
-    bound = w_num/2.0 + ctol
+    #ctol = 1/24.0 #proportional to w/2
+    #bound = w_num/2.0 + ctol
+    bound = w_num/2.0
 
     impact_conds = np.array([
         -bound < v11x_B2_np(*s) < bound   and   -bound < v11y_B2_np(*s) < bound,

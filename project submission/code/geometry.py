@@ -113,7 +113,7 @@ height = win_height // pixels_to_unit
 
 #let frame GUI be the coordinates as seen on the GUI,
 #frame r be the frame at GUI coords (0,0) with axes in same direction
-#as frame s
+#as frame s. This is not in SE(3) so InvSEn() cannot be used with this.
 GrGUI = np.array([
     [width/win_width,    0, 0, 0],
     [0, -height/win_height, 0, 0],

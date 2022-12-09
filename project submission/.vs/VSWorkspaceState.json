@@ -1,13 +1,11 @@
 {
   "ExpandedNodes": [
     "",
+    "\\code",
     "\\dill",
     "\\media",
-    "\\pdf",
-    "\\sprites",
-    "\\txt",
-    "\\_dotpy"
+    "\\pdf"
   ],
-  "SelectedNode": "\\_dotpy\\helpers.py",
+  "SelectedNode": "\\code\\geometry.py",
   "PreviewInSolutionExplorer": false
 }

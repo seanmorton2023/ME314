@@ -9,6 +9,7 @@ from helpers import *
 from geometry import *
 
 def make_oval(canvas: tk.Canvas, center: tuple, width: int, height: int, fill: str='hotpink'):
+    #from CS110; credit to Sarah Van Wart
     top_left = (center[0] - width, center[1] - height)
     bottom_right = (center[0] + width, center[1] + height)
     return canvas.create_oval([top_left, bottom_right], fill=fill, width=0) #return content ID
@@ -17,7 +18,8 @@ def make_circle(canvas: tk.Canvas, center: tuple, radius: int, fill: str='hotpin
     return make_oval(canvas, center, radius, radius, fill=fill) #return content ID
 
 def make_grid_label(canvas, x, y, w, h, offset, pixels_to_unit):
-        
+    #from CS110; credit to Sarah Van Wart
+
     #apply offset by finding origin and applying conversion
     #from pixels to units in world
     width_world = w//pixels_to_unit
@@ -47,6 +49,7 @@ def make_grid_label(canvas, x, y, w, h, offset, pixels_to_unit):
     )
 
 def make_grid(canvas, w, h, interval):
+    #from CS110; credit to Sarah Van Wart
     #interval = the # of pixels per unit distance in the simulation
     
     # Delete old grid if it exists:
@@ -66,6 +69,7 @@ def make_grid(canvas, w, h, interval):
         make_grid_label(canvas, 0, i, w, h, offset, interval)
         
 def make_coordsys(canvas, x, y, line_length, tag):
+    #original work
     canvas.create_line(x, y, x + line_length,               y, arrow=tk.LAST, tag=tag+'x')
     canvas.create_line(x, y,               x, y - line_length, arrow=tk.LAST, tag=tag+'y')
 
@@ -75,6 +79,7 @@ def label_vertices(canvas, box1_vert_gui, box2_vert_gui):
 
     Box1_vert_gui and box2_vert_gui are 10x0 flattened arrays, (x1, y1, x2, y2,...)
     '''
+    #uses code from CS110's make_grid() function
 
     #remove 5th set of box vertices, as it closes the box structure
     box1_vert_gui = np.array(box1_vert_gui)[:-2]
@@ -106,9 +111,11 @@ def label_vertices(canvas, box1_vert_gui, box2_vert_gui):
         )
 
 def make_invisible(canvas,id):
+    #my own original work from CS110
     canvas.itemconfigure(id, state='hidden')
 
 def make_visible(canvas,id):
+    #my own original work from CS110
     canvas.itemconfigure(id, state='normal')
 
 def draw_image(canvas:tk.Canvas, gui, center:tuple, file_path:str, size:int=0,
@@ -133,6 +140,7 @@ def draw_image(canvas:tk.Canvas, gui, center:tuple, file_path:str, size:int=0,
     Returns:
         the ID for the image; position and visibility can be modified
     '''
+    #my own work from CS110
 
     # adds folder directory to path
     directory = os.path.dirname(os.path.realpath(__file__))       

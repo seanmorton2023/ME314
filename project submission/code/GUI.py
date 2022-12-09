@@ -28,6 +28,8 @@ class GUI:
         self.last_frametime = 0
         self.q_ind = 0
         self.impact_photoID = None
+        self.mouse_posn_gui = [win_width//2, win_height//2]
+        self.mouse_posn_s = [0,0]
 
     ###
 
@@ -187,6 +189,11 @@ class GUI:
         self.canvas.coords('user_posy', 
                      event.x, event.y,
                      event.x, event.y - self.coordsys_len)
+        self.mouse_posn_gui = [event.x, event.y]
+
+        #calculate position of user in s frame
+        mouse_posn_guibar = np.array([event.x, event.y, 0, 1])
+        self.mouse_posn_s = np.dot(GsGUI, mouse_posn_guibar)[0:2]
 
     def close(self):
         try:

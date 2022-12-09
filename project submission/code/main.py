@@ -18,8 +18,9 @@ from impacts import *
 
 #time parameters
 framerate_ms = 20
-dt = 0.005
-t_span = [0, 5]
+#dt = 0.005
+dt = 0.01
+t_span = [0, 30]
 t_array = np.arange(t_span[0], t_span[1], dt)
 
 theta0 = np.pi/4
@@ -28,29 +29,13 @@ init_velocities = [0, 0, -1, 1, 7, -4]
 ICs = init_posns + init_velocities
 
 #spring and damping constants for PD control
-k = 30
+#k = 30
+k = 50
 Bx = 2
 By = 5
 
 #tolerance for detecting if phi(q) near zero
-atol = 1E-1
-
-#define trajectory for particle to follow
-y_tracking = lambda t: -np.sin(3*np.pi*t)+1
-x_tracking = lambda t: 0
-
-#forces use PD control in x and y to track a position
-F_eqs_array = np.array([
-    lambda s,t: k*(x_tracking(t) - s[0]) - Bx*s[6] , #F_x - damping term applied to vel.
-    lambda s,t: k*(y_tracking(t) - s[1]) - By*s[7] + 19.62, #F_y
-    lambda s,t: 0, #F_theta1
-    lambda s,t: 0, #F_theta2
-    lambda s,t: 0, #F_phi1
-    lambda s,t: 0, #F_phi2
-])
-
-dxdt = construct_dxdt(F_eqs_array)
-
+atol = 5E-2
 
 #----------------initialize GUI----------------------#
 
@@ -58,7 +43,42 @@ gui = GUI(win_height, win_width) #namespace for variables: geometry.py
 gui.load_arrays(line_coords_mat, vertices_mat)   #geometry.py as well
 gui.load_gui_params(L_num, w_num, coordsys_len, GsGUI, 
                     framerate_ms, '../sprites/impact_sparks.png') #plotting_helpers.py
+
+#-----------------forces and dxdt--------------------#
+
+#forces use PD control in x and y to track a position
+F_eqs_array = np.array([
+    lambda s,t: k*(gui.mouse_posn_s[0] - s[0]) - Bx*s[6] , #F_x - damping term applied to vel.
+    lambda s,t: k*(gui.mouse_posn_s[1] - s[1]) - By*s[7] + 19.62, #F_y
+    lambda s,t: 0, #F_theta1
+    lambda s,t: 0, #F_theta2
+    lambda s,t: 0, #F_phi1
+    lambda s,t: 0, #F_phi2
+])
+
+dxdt = construct_dxdt(F_eqs_array)
 gui.load_simulation(dxdt, t_span, dt, ICs, atol)
+
+#to make the particle follow a predetermined path instead, uncomment the following code.
+#k = 30, dt = 0.005 was working pretty well with the path below.
+
+##define trajectory for particle to follow
+#y_tracking = lambda t: -np.sin(3*np.pi*t)+1
+#x_tracking = lambda t: 0
+
+##forces use PD control in x and y to track a position
+#F_eqs_array = np.array([
+#    lambda s,t: k*(x_tracking(t) - s[0]) - Bx*s[6] , #F_x - damping term applied to vel.
+#    lambda s,t: k*(y_tracking(t) - s[1]) - By*s[7] + 19.62, #F_y
+#    lambda s,t: 0, #F_theta1
+#    lambda s,t: 0, #F_theta2
+#    lambda s,t: 0, #F_phi1
+#    lambda s,t: 0, #F_phi2
+#])
+
+#dxdt = construct_dxdt(F_eqs_array)
+#gui.load_simulation(dxdt, t_span, dt, ICs, atol)
+
 
 #----------------populate canvas----------------------#
 
